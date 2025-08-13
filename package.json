@@ -4,7 +4,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "ts-node-dev --respawn --transpile-only src/client/index.ts"
+    "dev-front": "vite",
+    "dev-back": "ts-node-dev --respawn --transpile-only src/server/server.ts",
+    "dev": "concurrently \"npm run dev-back\" \"npm run dev-front\""
   },
   "keywords": [],
   "author": "",
@@ -13,11 +15,14 @@
   "devDependencies": {
     "@types/express": "^5.0.3",
     "@types/node": "^24.2.1",
+    "concurrently": "^9.2.0",
+    "cors": "^2.8.5",
     "express": "^5.1.0",
     "socket.io": "^4.8.1",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vite": "^7.1.1"
   },
   "dependencies": {
     "socket.io-client": "^4.8.1"

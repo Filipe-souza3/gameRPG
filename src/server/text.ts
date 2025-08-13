@@ -1,3 +1,4 @@
+// "dev": "ts-node-dev --respawn --transpile-only src/client/index.ts
 // // package.json
 // {
 //   "name": "game",

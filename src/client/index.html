@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Jogo Multiplayer</title>
+  <style>
+    .total, body{
+      margin:0;
+      padding:0;
+      height: 100vh;
+      background-color: aquamarine;
+    }
+    body {
+      background-color: rgb(32, 73, 75);
+    }
+    .total{
+      display: flex;
+      flex-direction: column;
+    }
+    .menu{
+      height: 200px;
+      background-color: burlywood;
+    }
+    .title{
+      font-size: larger;
+    }
+    #logs{
+      max-height: 100px;
+      overflow-y: auto;
+    }
+    .content{
+      position: relative;;
+      width: 100%;
+      flex:1;
+      background-color: rgb(42, 84, 163);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="total">
+  <div class="menu">
+    <div class="title">Jogo Multiplayer</div>
+    <input id="name" placeholder="Seu nome" />
+    <button id="join">Entrar</button>
+    <button id="action">Ação</button>
+    <ul id="logs"></ul>
+  </div>
+  <canvas class="content" id="content">
+
+  </canvas>
+</div>
+  <script type="module" src="./index.ts"></script>
+
+</body>
+
+</html>
