@@ -2,6 +2,7 @@
 <html lang="pt-br">
 
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta charset="UTF-8" />
   <title>Jogo Multiplayer</title>
   <style>
@@ -29,11 +30,11 @@
       max-height: 100px;
       overflow-y: auto;
     }
-    .content{
+    .area{
       position: relative;;
       width: 100%;
       flex:1;
-      background-color: rgb(42, 84, 163);
+      background-color: rgb(255, 255, 255);
     }
   </style>
 </head>
@@ -47,9 +48,9 @@
     <button id="action">Ação</button>
     <ul id="logs"></ul>
   </div>
-  <div class="content" id="content">
+  <canvas class="area" id="area"  style="border:1px solid black;">
 
-  </div>
+  </canvas>
 </div>
   <script type="module" src="./index.ts"></script>
 
