@@ -1,6 +1,6 @@
 // import { server } from "../server/server";
 import { io } from 'socket.io-client';
-
+import { trees } from './objects/trees'
 /*
 ver sobre chunks
 carregar objs conforme aparece na camera
@@ -20,9 +20,12 @@ export class index {
 
     //area
     dpr: number = window.devicePixelRatio || 1; //valor repsentante do pixel real
-    steps: number = 1;
-    canvas: HTMLCanvasElement = document.getElementById("area") as HTMLCanvasElement;
-    ctx?: CanvasRenderingContext2D;
+    steps: number = 5; //velocidade
+    marginCollision: number = 5;
+    canvasArea: HTMLCanvasElement = document.getElementById("area") as HTMLCanvasElement;
+    canvasObjects: HTMLCanvasElement = document.getElementById("objects") as HTMLCanvasElement;
+    ctxArea?: CanvasRenderingContext2D;
+    ctxObjects?: CanvasRenderingContext2D;
     width: number = 0;
     height: number = 0;
     worldx: number = 0;
@@ -33,19 +36,21 @@ export class index {
         size: 20,
         color: "red"
     }
+    ground: any = { x: 0, y: 0, sizex: 0, sizey: 0, img: "grass.jpg" };
+    groundx: number = 0;
+    groundy: number = 0;
     objects: any[] = [
-        { x: 20, y: 10, size: 20, color: "green", img: "tree.gif" },
-        { x: -150, y: 50, size: 55, color: "blue", img: "tree.gif" },
-        { x: 300, y: -200, size: 80, color: "gray", img: "tree.gif" },
-        { x: 100, y: 300, size: 130, color: "orange", img: "tree.gif" },
-        { x: -200, y: -150, size: 10, color: "black", img: "tree.gif" },
+        { x: 100, y: 300, size: 130, color: "orange", img: "tree.webp" },
+        { x: 300, y: -200, size: 80, color: "gray", img: "tree3.png" },
+        { x: 20, y: 10, size: 40, color: "green", img: "tree4.png" },
+        { x: -150, y: 50, size: 55, color: "blue", img: "tree2.png" },
+        { x: -200, y: -150, size: 100, color: "black", img: "tree1.png" },
     ];
 
-    img = new Image();
-            
+
 
     //keys
-    delayKeyPress: number = 1000;
+    delayKeyPress: number = 0;
     lastKeyPress: number = 0;
     arrowKeys: any = {
         up: "ArrowUp",
@@ -69,57 +74,135 @@ export class index {
         // let canvas = document.getElementById("area") as HTMLCanvasElement;
         // this.ctx = canvas.getContext("2d") || undefined;
 
-        this.ctx = this.canvas.getContext("2d") || undefined;
+        this.ctxObjects = this.canvasObjects.getContext("2d") || undefined;
+        this.ctxArea = this.canvasArea.getContext("2d") || undefined;
+        // this.ctxObjects!.fillStyle = "green";
 
     }
 
     resizeCanvas() {
-        this.width = this.canvas.clientWidth;
-        this.height = this.canvas.clientHeight;
-        this.canvas.width = this.width * this.dpr;
-        this.canvas.height = this.height * this.dpr;
-        this.canvas.style.width = this.width + "px";
-        this.canvas.style.height = this.height + "px";
+        let allCanvas = document.getElementById("all-canvas") as HTMLDivElement;
+        //area
+        // this.width = this.canvasObjects.clientWidth;
+        // this.height = this.canvasObjects.clientHeight;
+        // this.canvasObjects.width = this.width * this.dpr;
+        // this.canvasObjects.height = this.height * this.dpr;
+        // this.canvasObjects.style.width = this.width + "px";
+        // // this.canvasObjects.style.height = this.height + "px";
+        // this.canvasObjects.style.height = "900px";
+
+        //objects
+        this.width = allCanvas.clientWidth;
+        this.height = allCanvas.clientHeight;
+        // this.width = this.canvasObjects.clientWidth;
+        // this.height = this.canvasObjects.clientHeight;
+        this.canvasObjects.width = this.width * this.dpr;
+        this.canvasObjects.height = this.height * this.dpr;
+        this.canvasObjects.style.width = this.width + "px";
+        // this.canvasObjects.style.height = this.height + "px";
+        this.canvasObjects.style.height = "900px";
+
+        this.ground.sizex = this.width;
+        this.ground.sizey = this.height;
+
+        //para fazer o chao carregar ao andar
+        this.groundx = this.ground.x;
+        this.groundy = this.ground.y;
     }
 
+
     drawObjects() {
-        // type GameObject = {
-        // x: number;
-        // y: number;
-        // color: string;
-        // };
-// this.img.src = 'https://via.placeholder.com/200x150';
-        this.ctx?.clearRect(0, 0, this.width, this.height);
+
+        this.ctxObjects?.clearRect(0, 0, this.width, this.height);
+
+        this.drawGround();
+
         if (this.name) {
             this.createPlayer();
         }
-        this.objects.forEach((obj) => {
+        trees.forEach((obj) => {
 
-            let screenX = obj.x - this.worldx;
-            let screenY = obj.y - this.worldy;
-
-            //            // Desenha só se estiver dentro do canvas
-            // if (
-            //   screenX + 32 < 0 || screenX > WIDTH ||
-            //   screenY + 32 < 0 || screenY > HEIGHT
-            // ) {
-            //   continue;
-            // }
-
-            // let img = new Image();
-            // img.src = 'https://via.placeholder.com/200x150';
-            // img.src = './tree.gif';
-            // this.img.onload = () => {
-
-            //     this.ctx!.drawImage(this.img, screenX, screenY, obj.size, obj.size);
+            if ((obj.x - this.worldx) > ((obj.size * 0.8) * (-1)) && (obj.x - this.worldx) < this.width
+                && (obj.y - this.worldy) > ((obj.size * 0.8) * (-1)) && (obj.y - this.worldy) < this.height) {
 
 
-            //     this.ctx!.strokeStyle = 'black';
-            //     this.ctx!.lineWidth = 2;
-            //     this.ctx!.strokeRect(screenX, screenY,  obj.size,  obj.size);
-            // }
-            this.ctx!.fillStyle = obj.color;
-            this.ctx!.fillRect(screenX, screenY, obj.size, obj.size);
+                let screenX = obj.x - this.worldx;
+                let screenY = obj.y - this.worldy;
+
+                this.drawTrees(obj, screenX, screenY);
+
+                // }
+                // this.ctx!.fillStyle = obj.color;
+                // this.ctx!.fillRect(screenX, screenY, obj.size, obj.size);
+            }
+        });
+
+
+    }
+
+    drawTrees(tree: any, screenX: number, screenY: number) {
+        let trees = new Image();
+        trees.src = './imgs/' + tree.img;
+        this.ctxObjects!.drawImage(trees, screenX, screenY, tree.size, tree.size);
+
+
+        this.ctxObjects!.strokeStyle = 'black';
+        this.ctxObjects!.lineWidth = 1;
+        this.ctxObjects!.strokeRect(screenX, screenY, tree.size, tree.size);
+    }
+
+    drawGround() {
+        let ground = new Image();
+        ground.src = './imgs/' + this.ground.img;
+
+        //center
+        this.ctxObjects!.drawImage(ground, this.groundx - this.worldx, this.groundy - this.worldy, this.width, this.height);
+        //left
+        this.ctxObjects!.drawImage(ground, (this.groundx - this.width) - this.worldx, this.groundy - this.worldy, this.width, this.height);
+        //right
+        this.ctxObjects!.drawImage(ground, (this.groundx + this.width) - this.worldx, this.groundy - this.worldy, this.width, this.height);
+        //up
+        this.ctxObjects!.drawImage(ground, this.groundx - this.worldx, (this.groundy - this.height) - this.worldy, this.width, this.height);
+        //down
+        this.ctxObjects!.drawImage(ground, this.groundx - this.worldx, (this.groundy + this.height) - this.worldy, this.width, this.height);
+        //top left
+        this.ctxObjects!.drawImage(ground, (this.groundx- this.width) - this.worldx, (this.groundy - this.height) - this.worldy, this.width, this.height);
+
+        if (this.groundx > (this.worldx)) {
+            this.groundx = this.groundx - this.width;
+        }
+        if(this.groundx < (this.worldx)){
+            this.groundx = this.groundx + this.width;
+        }
+        if(this.groundy > (this.worldy)){
+            this.groundy = this.groundy - this.height;
+        }
+        if(this.groundy < (this.worldy)){
+            this.groundy = this.groundy + this.height;
+        }
+    }
+
+    collisionPlayer(key: string, futurePosition: number) {
+        let left = 0, right = 0, up = 0, down = 0;
+        if (key == this.arrowKeys.left) { left = futurePosition }
+        if (key == this.arrowKeys.right) { right = futurePosition; }
+        if (key == this.arrowKeys.up) { up = futurePosition; }
+        if (key == this.arrowKeys.down) { down = futurePosition; }
+        let halfPlayer = this.myPlayer.size / 2;
+
+        return trees.some((e) => {
+
+            if ((e.x - this.worldx) > 0 && (e.x - this.worldx) < this.width
+                && (e.y - this.worldy) > 0 && (e.y - this.worldy) < this.height) {
+
+                if (((e.x - this.worldx) + e.size + halfPlayer) >= ((this.width * this.dpr) / 2) - left
+                    && (e.x - this.worldx) <= (((this.width * this.dpr) / 2) + halfPlayer + right)
+                    && ((e.y - this.worldy) + e.size + halfPlayer) >= ((this.height * this.dpr) / 2) - up
+                    && (e.y - this.worldy) <= (((this.height * this.dpr) / 2) + halfPlayer + down)) {
+
+                    return true;
+                }
+            }
         });
     }
 
@@ -179,36 +262,14 @@ export class index {
         });
     }
 
-    collisionPlayer(key: string, futurePosition: number) {
-        let left = 0, right = 0, up = 0, down = 0;
-        if (key == this.arrowKeys.left) { left = futurePosition }
-        if (key == this.arrowKeys.right) { right = futurePosition; }
-        if (key == this.arrowKeys.up) { up = futurePosition; }
-        if (key == this.arrowKeys.down) { down = futurePosition; }
-        let halfPlayer = this.myPlayer.size / 2;
 
-        return this.objects.some((e) => {
-
-            if ((e.x - this.worldx) > 0 && (e.x - this.worldx) < this.width
-                && (e.y - this.worldy) > 0 && (e.y - this.worldy) < this.height) {
-
-                if (((e.x - this.worldx) + e.size + halfPlayer) >= ((this.width * this.dpr) / 2) - left
-                    && (e.x - this.worldx) <= (((this.width * this.dpr) / 2) + halfPlayer + right)
-                    && ((e.y - this.worldy) + e.size + halfPlayer) >= ((this.height * this.dpr) / 2) - up
-                    && (e.y - this.worldy) <= (((this.height * this.dpr) / 2) + halfPlayer + down)) {
-
-                    return true;
-                }
-            }
-        });
-    }
 
     movePlayer(id?: string, direction?: any) {
         if (Object.keys(this.keys).length > 0) {
-            if (this.keys[this.arrowKeys.up] && !(this.collisionPlayer(this.arrowKeys.up, 1))) { this.worldy -= this.steps; }
-            if (this.keys[this.arrowKeys.left] && !(this.collisionPlayer(this.arrowKeys.left, 1))) { this.worldx -= this.steps; }
-            if (this.keys[this.arrowKeys.down] && !this.collisionPlayer(this.arrowKeys.down, 1)) { this.worldy += this.steps; }
-            if (this.keys[this.arrowKeys.right] && !this.collisionPlayer(this.arrowKeys.right, 1)) { this.worldx += this.steps; }
+            if (this.keys[this.arrowKeys.up] && !(this.collisionPlayer(this.arrowKeys.up, this.marginCollision))) { this.worldy -= this.steps; }
+            if (this.keys[this.arrowKeys.left] && !(this.collisionPlayer(this.arrowKeys.left, this.marginCollision))) { this.worldx -= this.steps; }
+            if (this.keys[this.arrowKeys.down] && !this.collisionPlayer(this.arrowKeys.down, this.marginCollision)) { this.worldy += this.steps; }
+            if (this.keys[this.arrowKeys.right] && !this.collisionPlayer(this.arrowKeys.right, this.marginCollision)) { this.worldx += this.steps; }
         }
     }
 
@@ -233,10 +294,10 @@ export class index {
     }
 
     createPlayer(id?: string) {
-        if (this.ctx) {
-            this.ctx.fillStyle = "red";
+        if (this.ctxObjects) {
+            this.ctxObjects.fillStyle = "red";
             // this.ctx.fillRect((this.width / 2 - 10), (this.height / 2 - 10), 20, 15);
-            this.ctx.fillRect(((this.width * this.dpr) / 2) - (this.myPlayer.size / 2), ((this.height * this.dpr) / 2) - (this.myPlayer.size / 2), this.myPlayer.size, this.myPlayer.size);
+            this.ctxObjects.fillRect(((this.width * this.dpr) / 2) - (this.myPlayer.size / 2), ((this.height * this.dpr) / 2) - (this.myPlayer.size / 2), this.myPlayer.size, this.myPlayer.size);
         }
 
 

@@ -9,7 +9,7 @@
     .total, body{
       margin:0;
       padding:0;
-      height: 100vh;
+      height: 90vh;
       background-color: aquamarine;
     }
     body {
@@ -30,11 +30,26 @@
       max-height: 100px;
       overflow-y: auto;
     }
-    .area{
-      position: relative;;
+    .area, .objects{
+      /* position: relative; */
       width: 100%;
-      flex:1;
-      background-color: rgb(255, 255, 255);
+      /* flex:1; */
+      /* background-color: rgb(71, 241, 113); */
+      /* background-image:url('./imgs/grass.jpg'); */
+    }
+    .all-canvas{
+      position: relative;
+      height: 90%;
+    }
+    .area{
+      height: 100%;
+      position: absolute;
+      z-index: 0;
+    }
+    .objects{
+      height: 100%;
+      /* position:absolute; */
+      z-index: 1;
     }
   </style>
 </head>
@@ -48,9 +63,10 @@
     <button id="action">Ação</button>
     <ul id="logs"></ul>
   </div>
-  <canvas class="area" id="area"  style="border:1px solid black;">
-
-  </canvas>
+  <div class="all-canvas" id="all-canvas">
+    <canvas class="area" id="area"></canvas>
+    <canvas class="objects" id="objects"></canvas>
+  </div>
 </div>
   <script type="module" src="./index.ts"></script>
 
