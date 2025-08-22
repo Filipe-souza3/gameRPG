@@ -1,6 +1,7 @@
 // import { server } from "../server/server";
 import { io } from 'socket.io-client';
 import { trees } from './objects/trees'
+import { timeLog } from 'console';
 /*
 ver sobre chunks
 carregar objs conforme aparece na camera
@@ -20,7 +21,7 @@ export class index {
 
     //area
     dpr: number = window.devicePixelRatio || 1; //valor repsentante do pixel real
-    steps: number = 5; //velocidade
+    steps: number = 1; //velocidade
     marginCollision: number = 5;
     canvasArea: HTMLCanvasElement = document.getElementById("area") as HTMLCanvasElement;
     canvasObjects: HTMLCanvasElement = document.getElementById("objects") as HTMLCanvasElement;
@@ -32,10 +33,44 @@ export class index {
     worldy: number = 0;
     keys: any = {};
     keyCollision?: string;
-    myPlayer: any = {
-        size: 20,
-        color: "red"
+
+
+    globalFrames: any = {
+        move: [
+            { y: 0, x: 0 },
+            { y: 0, x: 64 },
+            { y: 0, x: (64 * 2) },
+            { y: 0, x: (64 * 3) },
+            { y: 0, x: (64 * 4) },
+            { y: 0, x: (64 * 5) },
+            { y: 0, x: (64 * 6) },
+            { y: 0, x: (64 * 7) }
+        ],
+        stop: [
+            { y: 0, x: 0 }
+        ]
     }
+    playerGif = new Image();
+    playerDirection: any = null;
+    myPlayer: any = {
+        size: 80,
+        direction: {
+            up: { img: "./imgs/citizen/CitizenMaleMoveUp.png", frames: this.globalFrames.move },
+            down: { img: "./imgs/citizen/CitizenMaleMoveDown.png", frames: this.globalFrames.move },
+            left: { img: "./imgs/citizen/CitizenMaleMoveLeft.png", frames: this.globalFrames.move },
+            right: { img: "./imgs/citizen/CitizenMaleMoveRight.png", frames: this.globalFrames.move },
+            upStop: { img: './imgs/citizen/CitizenMaleUp.png', frames: this.globalFrames.stop },
+            downStop: { img: './imgs/citizen/CitizenMaleDown.png', frames: this.globalFrames.stop },
+            leftStop: { img: './imgs/citizen/CitizenMaleLeft.png', frames: this.globalFrames.stop },
+            rightStop: { img: './imgs/citizen/CitizenMaleRight.png', frames: this.globalFrames.stop },
+        },
+    }
+    framePlayer: number = 0;
+    lastFrameTime: number = 0;
+    frameDuration: number = 100;
+
+
+
     ground: any = { x: 0, y: 0, sizex: 0, sizey: 0, img: "grass.jpg" };
     groundx: number = 0;
     groundy: number = 0;
@@ -50,7 +85,8 @@ export class index {
 
 
     //keys
-    delayKeyPress: number = 0;
+    pressedLastKey: string = "";
+    delayKeyPress: number = 10;
     lastKeyPress: number = 0;
     arrowKeys: any = {
         up: "ArrowUp",
@@ -67,6 +103,9 @@ export class index {
         this.resizeCanvas();
         this.initSocket();
         this.gameLoop();
+        this.playerDirection = this.myPlayer.direction.downStop;
+        this.playerGif.src = this.playerDirection.img;
+        // this.playerGif.src = this.myPlayer.direction.downStop.img;
     }
 
 
@@ -166,18 +205,18 @@ export class index {
         //down
         this.ctxObjects!.drawImage(ground, this.groundx - this.worldx, (this.groundy + this.height) - this.worldy, this.width, this.height);
         //top left
-        this.ctxObjects!.drawImage(ground, (this.groundx- this.width) - this.worldx, (this.groundy - this.height) - this.worldy, this.width, this.height);
+        this.ctxObjects!.drawImage(ground, (this.groundx - this.width) - this.worldx, (this.groundy - this.height) - this.worldy, this.width, this.height);
 
         if (this.groundx > (this.worldx)) {
             this.groundx = this.groundx - this.width;
         }
-        if(this.groundx < (this.worldx)){
+        if (this.groundx < (this.worldx)) {
             this.groundx = this.groundx + this.width;
         }
-        if(this.groundy > (this.worldy)){
+        if (this.groundy > (this.worldy)) {
             this.groundy = this.groundy - this.height;
         }
-        if(this.groundy < (this.worldy)){
+        if (this.groundy < (this.worldy)) {
             this.groundy = this.groundy + this.height;
         }
     }
@@ -252,24 +291,63 @@ export class index {
 
     addListenersControls(id: string) {
         document.addEventListener("keydown", (event) => {
-            console.log("key");
-            let now = Date.now();
-            if (now - this.lastKeyPress < this.delayKeyPress) { return; }
-            this.keys[event.key] = true;
+            // let now = new Date().getSeconds();
+            if ((new Date().getTime() - this.lastKeyPress) > this.delayKeyPress) {
+                //       return;;
+                //     }
+                // else{
+                this.keys[event.key] = true;
+                this.lastKeyPress = new Date().getTime();
+                console.log("key");
+            }
+            console.log(new Date().getTime());
+            console.log(this.lastKeyPress);
+            // console.log(now - this.lastKeyPress);
         });
         document.addEventListener("keyup", (event) => {
             this.keys[event.key] = false;
+            this.stopPlayer();
         });
     }
 
 
+    stopPlayer() {
+        if (!this.keys[this.arrowKeys.up] && !this.keys[this.arrowKeys.down] && !this.keys[this.arrowKeys.left] && !this.keys[this.arrowKeys.right]) {
+            if (this.pressedLastKey == this.arrowKeys.up) { this.playerGif.src = this.myPlayer.direction.upStop.img; this.playerDirection = this.myPlayer.direction.upStop; }
+            if (this.pressedLastKey == this.arrowKeys.down) { this.playerGif.src = this.myPlayer.direction.downStop.img; this.playerDirection = this.myPlayer.direction.downStop; }
+            if (this.pressedLastKey == this.arrowKeys.left) { this.playerGif.src = this.myPlayer.direction.leftStop.img; this.playerDirection = this.myPlayer.direction.leftStop; }
+            if (this.pressedLastKey == this.arrowKeys.right) { this.playerGif.src = this.myPlayer.direction.rightStop.img; this.playerDirection = this.myPlayer.direction.rightStop; }
+        }
+    }
+
 
     movePlayer(id?: string, direction?: any) {
         if (Object.keys(this.keys).length > 0) {
-            if (this.keys[this.arrowKeys.up] && !(this.collisionPlayer(this.arrowKeys.up, this.marginCollision))) { this.worldy -= this.steps; }
-            if (this.keys[this.arrowKeys.left] && !(this.collisionPlayer(this.arrowKeys.left, this.marginCollision))) { this.worldx -= this.steps; }
-            if (this.keys[this.arrowKeys.down] && !this.collisionPlayer(this.arrowKeys.down, this.marginCollision)) { this.worldy += this.steps; }
-            if (this.keys[this.arrowKeys.right] && !this.collisionPlayer(this.arrowKeys.right, this.marginCollision)) { this.worldx += this.steps; }
+            // console.log(this.keys);
+            if (this.keys[this.arrowKeys.up] && !(this.collisionPlayer(this.arrowKeys.up, this.marginCollision))) {
+                this.worldy -= this.steps;
+                this.playerGif.src = this.myPlayer.direction.up.img;
+                this.playerDirection = this.myPlayer.direction.up;
+                this.pressedLastKey = this.arrowKeys.up;
+            }
+            else if (this.keys[this.arrowKeys.left] && !(this.collisionPlayer(this.arrowKeys.left, this.marginCollision))) {
+                this.worldx -= this.steps;
+                this.playerGif.src = this.myPlayer.direction.left.img;
+                this.playerDirection = this.myPlayer.direction.left;
+                this.pressedLastKey = this.arrowKeys.left;
+            }
+            else if (this.keys[this.arrowKeys.down] && !this.collisionPlayer(this.arrowKeys.down, this.marginCollision)) {
+                this.worldy += this.steps;
+                this.playerGif.src = this.myPlayer.direction.down.img;
+                this.playerDirection = this.myPlayer.direction.down;
+                this.pressedLastKey = this.arrowKeys.down;
+            }
+            else if (this.keys[this.arrowKeys.right] && !this.collisionPlayer(this.arrowKeys.right, this.marginCollision)) {
+                this.worldx += this.steps;
+                this.playerGif.src = this.myPlayer.direction.right.img;
+                this.playerDirection = this.myPlayer.direction.right;
+                this.pressedLastKey = this.arrowKeys.right;
+            }
         }
     }
 
@@ -293,21 +371,33 @@ export class index {
         this.socket.emit("playerAction", `${this.name} fez uma acao`);
     }
 
+
+
     createPlayer(id?: string) {
+
         if (this.ctxObjects) {
-            this.ctxObjects.fillStyle = "red";
-            // this.ctx.fillRect((this.width / 2 - 10), (this.height / 2 - 10), 20, 15);
-            this.ctxObjects.fillRect(((this.width * this.dpr) / 2) - (this.myPlayer.size / 2), ((this.height * this.dpr) / 2) - (this.myPlayer.size / 2), this.myPlayer.size, this.myPlayer.size);
+
+
+            // if(this.frameLimit <= this.frame){
+            // this.ctxObjects.fillStyle = "red";
+            // this.ctxObjects.fillRect(((this.width * this.dpr) / 2) - (this.myPlayer.size / 2), ((this.height * this.dpr) / 2) - (this.myPlayer.size / 2), this.myPlayer.size, this.myPlayer.size);
+            this.ctxObjects!.drawImage(
+                this.playerGif,
+                this.playerDirection.frames[this.framePlayer % this.playerDirection.frames.length].x, this.playerDirection.frames[this.framePlayer % this.playerDirection.frames.length].y,
+                // this.myPlayer.frames[this.framePlayer % this.myPlayer.frames.length].x, this.myPlayer.frames[this.framePlayer % this.myPlayer.frames.length].y,
+                // 0,0,
+                64, 64,
+                ((this.width * this.dpr) / 2) - (this.myPlayer.size / 2), ((this.height * this.dpr) / 2) - (this.myPlayer.size / 2),
+                this.myPlayer.size, this.myPlayer.size);
+
+            if (this.framePlayer >= 8) { this.framePlayer = 0 }
+
+            if (new Date().getTime() - this.lastFrameTime > this.frameDuration) {
+                this.framePlayer++;
+                this.lastFrameTime = new Date().getTime();
+                console.log("fraame");
+            }
         }
-
-
-        // let p = document.createElement("div");
-        // p.style.width = "20px";
-        // p.style.height = "20px";
-        // p.style.backgroundColor = "red";
-        // p.style.position = "absolute";
-        // p.id = id;
-        // document.getElementById("area")?.appendChild(p);
     }
 
     log(message: string) {
