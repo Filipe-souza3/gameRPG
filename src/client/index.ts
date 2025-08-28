@@ -1,7 +1,10 @@
 // import { server } from "../server/server";
 import { io } from 'socket.io-client';
-import { trees } from './objects/trees'
+import { trees } from './objects/trees';
+// import { magicFieldBlue, frameFieldBlue } from './objects/others';
 import { timeLog } from 'console';
+import { Others } from './objects/others';
+import { Minotaur } from './objects/minotaur';
 /*
 ver sobre chunks
 carregar objs conforme aparece na camera
@@ -15,18 +18,22 @@ export class index {
 
     socket = io("http://localhost:3000");
 
+    //classes
+    magicFieldBlue: Others = new Others();
+    minotaur: Minotaur = new Minotaur();
+
     //player
     name?: string;
     id?: string;
 
     //area
     dpr: number = window.devicePixelRatio || 1; //valor repsentante do pixel real
-    steps: number = 1; //velocidade
+    steps: number = 0.5; //velocidade
     marginCollision: number = 5;
     canvasArea: HTMLCanvasElement = document.getElementById("area") as HTMLCanvasElement;
     canvasObjects: HTMLCanvasElement = document.getElementById("objects") as HTMLCanvasElement;
     ctxArea?: CanvasRenderingContext2D;
-    ctxObjects?: CanvasRenderingContext2D;
+    ctx?: CanvasRenderingContext2D;
     width: number = 0;
     height: number = 0;
     worldx: number = 0;
@@ -50,10 +57,9 @@ export class index {
             { y: 0, x: 0 }
         ]
     }
-    playerGif = new Image();
     playerDirection: any = null;
     myPlayer: any = {
-        size: 80,
+        size: 64,
         direction: {
             up: { img: "./imgs/citizen/CitizenMaleMoveUp.png", frames: this.globalFrames.move },
             down: { img: "./imgs/citizen/CitizenMaleMoveDown.png", frames: this.globalFrames.move },
@@ -70,7 +76,7 @@ export class index {
     frameDuration: number = 100;
 
 
-
+    //groud
     ground: any = { x: 0, y: 0, sizex: 0, sizey: 0, img: "grass.jpg" };
     groundx: number = 0;
     groundy: number = 0;
@@ -81,8 +87,6 @@ export class index {
         { x: -150, y: 50, size: 55, color: "blue", img: "tree2.png" },
         { x: -200, y: -150, size: 100, color: "black", img: "tree1.png" },
     ];
-
-
 
     //keys
     pressedLastKey: string = "";
@@ -95,17 +99,33 @@ export class index {
         right: "ArrowRight"
     }
 
+    //images
+    playerGif = new Image();
+    minotaurImage = new Image();
+
+
 
 
     constructor() {
+        this.instanceObejcts();
         this.addlisteners();
         this.createCanvas();
         this.resizeCanvas();
         this.initSocket();
         this.gameLoop();
+        this.createImages();
+        // this.playerGif.src = this.myPlayer.direction.downStop.img;
+    }
+
+    instanceObejcts() {
+        // this.magicFieldBlue = new Others();
+    }
+
+    createImages() {
         this.playerDirection = this.myPlayer.direction.downStop;
         this.playerGif.src = this.playerDirection.img;
-        // this.playerGif.src = this.myPlayer.direction.downStop.img;
+
+
     }
 
 
@@ -113,7 +133,7 @@ export class index {
         // let canvas = document.getElementById("area") as HTMLCanvasElement;
         // this.ctx = canvas.getContext("2d") || undefined;
 
-        this.ctxObjects = this.canvasObjects.getContext("2d") || undefined;
+        this.ctx = this.canvasObjects.getContext("2d") || undefined;
         this.ctxArea = this.canvasArea.getContext("2d") || undefined;
         // this.ctxObjects!.fillStyle = "green";
 
@@ -152,12 +172,17 @@ export class index {
 
     drawObjects() {
 
-        this.ctxObjects?.clearRect(0, 0, this.width, this.height);
+        this.ctx?.clearRect(0, 0, this.width, this.height);
 
         this.drawGround();
+        this.minotaur.drawMinotaur(this.ctx!, this.worldx, this.worldy, this.minotaurImage, this.width, this.height, this.dpr);
 
         if (this.name) {
             this.createPlayer();
+            if (this.magicFieldBlue.countShow < this.magicFieldBlue.frameDuration) {
+                this.drawMagicFieldBlue();
+                this.magicFieldBlue.countShow++;
+            }
         }
         trees.forEach((obj) => {
 
@@ -182,30 +207,68 @@ export class index {
     drawTrees(tree: any, screenX: number, screenY: number) {
         let trees = new Image();
         trees.src = './imgs/' + tree.img;
-        this.ctxObjects!.drawImage(trees, screenX, screenY, tree.size, tree.size);
+        this.ctx!.drawImage(trees, screenX, screenY, tree.size, tree.size);
 
 
-        this.ctxObjects!.strokeStyle = 'black';
-        this.ctxObjects!.lineWidth = 1;
-        this.ctxObjects!.strokeRect(screenX, screenY, tree.size, tree.size);
+        this.ctx!.strokeStyle = 'black';
+        this.ctx!.lineWidth = 1;
+        this.ctx!.strokeRect(screenX, screenY, tree.size, tree.size);
     }
+
+    drawMagicFieldBlue() {
+        let x = (this.width * this.dpr / 2);
+        let y = (this.height * this.dpr / 2);
+        // let x = (this.width / 2) - (magicFieldBlue.size / 2);
+        // let y = (this.height / 2) - (magicFieldBlue.size / 2);
+       
+        let fieldImg = new Image();
+        fieldImg.src = this.magicFieldBlue.img;
+        this.ctx!.drawImage(fieldImg,
+            this.magicFieldBlue.frames[this.magicFieldBlue.countFrames % this.magicFieldBlue.frames.length].x,
+            this.magicFieldBlue.frames[this.magicFieldBlue.countFrames % this.magicFieldBlue.frames.length].y,
+            this.magicFieldBlue.size, this.magicFieldBlue.size,
+            ((this.width * this.dpr) / 2) - (this.myPlayer.size / 2), ((this.height * this.dpr) / 2) - (this.myPlayer.size / 2),
+            this.magicFieldBlue.size*2, this.magicFieldBlue.size*2);
+
+        // this.ctx!.strokeStyle = 'black';
+        // this.ctx!.lineWidth = 1;
+        // this.ctx!.strokeRect(x - this.worldx, y - this.worldy,  sizeImage,  sizeImage);
+
+        if (this.magicFieldBlue.countFrames >= this.magicFieldBlue.maxFrames) { this.magicFieldBlue.countFrames = 0; }
+
+        if (new Date().getTime() - this.magicFieldBlue.lastFrameTime > this.magicFieldBlue.frameDuration) {
+            this.magicFieldBlue.countFrames++;
+            this.magicFieldBlue.lastFrameTime = new Date().getTime();
+        }
+    }
+
+
 
     drawGround() {
         let ground = new Image();
         ground.src = './imgs/' + this.ground.img;
 
+        let moveX = Math.floor((this.groundx - this.width) - this.worldx);
+        let moveY = Math.floor((this.groundy - this.height) - this.worldy);
+        let moveXX = Math.floor((this.groundx + this.width) - this.worldx);
+        let moveYY = Math.floor((this.groundy + this.height) - this.worldy);
+        let y = Math.floor(this.groundy - this.worldy);
+        let x = Math.floor(this.groundx - this.worldx);
+
         //center
-        this.ctxObjects!.drawImage(ground, this.groundx - this.worldx, this.groundy - this.worldy, this.width, this.height);
+        this.ctx!.drawImage(ground, x, y, this.width + 8, this.height + 8);
         //left
-        this.ctxObjects!.drawImage(ground, (this.groundx - this.width) - this.worldx, this.groundy - this.worldy, this.width, this.height);
+        this.ctx!.drawImage(ground, moveX, y, this.width, this.height);
         //right
-        this.ctxObjects!.drawImage(ground, (this.groundx + this.width) - this.worldx, this.groundy - this.worldy, this.width, this.height);
+        this.ctx!.drawImage(ground, moveXX, y, this.width, this.height);
         //up
-        this.ctxObjects!.drawImage(ground, this.groundx - this.worldx, (this.groundy - this.height) - this.worldy, this.width, this.height);
+        this.ctx!.drawImage(ground, x, moveY, this.width, this.height);
         //down
-        this.ctxObjects!.drawImage(ground, this.groundx - this.worldx, (this.groundy + this.height) - this.worldy, this.width, this.height);
+        this.ctx!.drawImage(ground, x, moveYY, this.width, this.height);
         //top left
-        this.ctxObjects!.drawImage(ground, (this.groundx - this.width) - this.worldx, (this.groundy - this.height) - this.worldy, this.width, this.height);
+        this.ctx!.drawImage(ground, moveX, moveY, this.width, this.height);
+
+        this.ctx!.lineWidth = 0;
 
         if (this.groundx > (this.worldx)) {
             this.groundx = this.groundx - this.width;
@@ -298,10 +361,9 @@ export class index {
                 // else{
                 this.keys[event.key] = true;
                 this.lastKeyPress = new Date().getTime();
-                console.log("key");
             }
-            console.log(new Date().getTime());
-            console.log(this.lastKeyPress);
+            // console.log(;new Date().getTime());
+            // console.log(this.lastKeyPress);
             // console.log(now - this.lastKeyPress);
         });
         document.addEventListener("keyup", (event) => {
@@ -313,10 +375,18 @@ export class index {
 
     stopPlayer() {
         if (!this.keys[this.arrowKeys.up] && !this.keys[this.arrowKeys.down] && !this.keys[this.arrowKeys.left] && !this.keys[this.arrowKeys.right]) {
-            if (this.pressedLastKey == this.arrowKeys.up) { this.playerGif.src = this.myPlayer.direction.upStop.img; this.playerDirection = this.myPlayer.direction.upStop; }
-            if (this.pressedLastKey == this.arrowKeys.down) { this.playerGif.src = this.myPlayer.direction.downStop.img; this.playerDirection = this.myPlayer.direction.downStop; }
-            if (this.pressedLastKey == this.arrowKeys.left) { this.playerGif.src = this.myPlayer.direction.leftStop.img; this.playerDirection = this.myPlayer.direction.leftStop; }
-            if (this.pressedLastKey == this.arrowKeys.right) { this.playerGif.src = this.myPlayer.direction.rightStop.img; this.playerDirection = this.myPlayer.direction.rightStop; }
+            if (this.pressedLastKey == this.arrowKeys.up) {
+                this.playerGif.src = this.myPlayer.direction.upStop.img; this.playerDirection = this.myPlayer.direction.upStop;
+            }
+            if (this.pressedLastKey == this.arrowKeys.down) {
+                this.playerGif.src = this.myPlayer.direction.downStop.img; this.playerDirection = this.myPlayer.direction.downStop;
+            }
+            if (this.pressedLastKey == this.arrowKeys.left) {
+                this.playerGif.src = this.myPlayer.direction.leftStop.img; this.playerDirection = this.myPlayer.direction.leftStop;
+            }
+            if (this.pressedLastKey == this.arrowKeys.right) {
+                this.playerGif.src = this.myPlayer.direction.rightStop.img; this.playerDirection = this.myPlayer.direction.rightStop;
+            }
         }
     }
 
@@ -348,6 +418,27 @@ export class index {
                 this.playerDirection = this.myPlayer.direction.right;
                 this.pressedLastKey = this.arrowKeys.right;
             }
+            // else if (this.keys.some((s:boolean)=> s == true)) {
+            else if (this.collisionPlayer(this.pressedLastKey, this.marginCollision)) {
+                console.log("hue");
+                if (this.pressedLastKey == this.arrowKeys.left) {
+                    this.playerGif.src = this.myPlayer.direction.leftStop.img;
+                    this.playerDirection = this.myPlayer.direction.leftStop;
+                }
+                else if (this.pressedLastKey == this.arrowKeys.right) {
+                    this.playerGif.src = this.myPlayer.direction.rightStop.img;
+                    this.playerDirection = this.myPlayer.direction.rightStop;
+                }
+                else if (this.pressedLastKey == this.arrowKeys.up) {
+                    this.playerGif.src = this.myPlayer.direction.upStop.img;
+                    this.playerDirection = this.myPlayer.direction.upStop;
+                }
+                else if (this.pressedLastKey == this.arrowKeys.down) {
+                    this.playerGif.src = this.myPlayer.direction.downStop.img;
+                    this.playerDirection = this.myPlayer.direction.downStop;
+                }
+
+            }
         }
     }
 
@@ -371,17 +462,15 @@ export class index {
         this.socket.emit("playerAction", `${this.name} fez uma acao`);
     }
 
-
-
     createPlayer(id?: string) {
 
-        if (this.ctxObjects) {
+        if (this.ctx) {
 
 
             // if(this.frameLimit <= this.frame){
             // this.ctxObjects.fillStyle = "red";
             // this.ctxObjects.fillRect(((this.width * this.dpr) / 2) - (this.myPlayer.size / 2), ((this.height * this.dpr) / 2) - (this.myPlayer.size / 2), this.myPlayer.size, this.myPlayer.size);
-            this.ctxObjects!.drawImage(
+            this.ctx!.drawImage(
                 this.playerGif,
                 this.playerDirection.frames[this.framePlayer % this.playerDirection.frames.length].x, this.playerDirection.frames[this.framePlayer % this.playerDirection.frames.length].y,
                 // this.myPlayer.frames[this.framePlayer % this.myPlayer.frames.length].x, this.myPlayer.frames[this.framePlayer % this.myPlayer.frames.length].y,
@@ -390,12 +479,15 @@ export class index {
                 ((this.width * this.dpr) / 2) - (this.myPlayer.size / 2), ((this.height * this.dpr) / 2) - (this.myPlayer.size / 2),
                 this.myPlayer.size, this.myPlayer.size);
 
+            this.ctx.strokeStyle = 'black';
+            this.ctx.lineWidth = 1;
+            this.ctx.strokeRect(((this.width * this.dpr) / 2) - (this.myPlayer.size / 2),((this.height * this.dpr) / 2) - (this.myPlayer.size / 2), this.myPlayer.size, this.myPlayer.size);
+
             if (this.framePlayer >= 8) { this.framePlayer = 0 }
 
             if (new Date().getTime() - this.lastFrameTime > this.frameDuration) {
                 this.framePlayer++;
                 this.lastFrameTime = new Date().getTime();
-                console.log("fraame");
             }
         }
     }
