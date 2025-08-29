@@ -220,7 +220,7 @@ export class index {
         let y = (this.height * this.dpr / 2);
         // let x = (this.width / 2) - (magicFieldBlue.size / 2);
         // let y = (this.height / 2) - (magicFieldBlue.size / 2);
-       
+
         let fieldImg = new Image();
         fieldImg.src = this.magicFieldBlue.img;
         this.ctx!.drawImage(fieldImg,
@@ -228,7 +228,7 @@ export class index {
             this.magicFieldBlue.frames[this.magicFieldBlue.countFrames % this.magicFieldBlue.frames.length].y,
             this.magicFieldBlue.size, this.magicFieldBlue.size,
             ((this.width * this.dpr) / 2) - (this.myPlayer.size / 2), ((this.height * this.dpr) / 2) - (this.myPlayer.size / 2),
-            this.magicFieldBlue.size*2, this.magicFieldBlue.size*2);
+            this.magicFieldBlue.size * 2, this.magicFieldBlue.size * 2);
 
         // this.ctx!.strokeStyle = 'black';
         // this.ctx!.lineWidth = 1;
@@ -292,7 +292,7 @@ export class index {
         if (key == this.arrowKeys.down) { down = futurePosition; }
         let halfPlayer = this.myPlayer.size / 2;
 
-        return trees.some((e) => {
+        let collisionTrees = trees.some((e) => {
 
             if ((e.x - this.worldx) > 0 && (e.x - this.worldx) < this.width
                 && (e.y - this.worldy) > 0 && (e.y - this.worldy) < this.height) {
@@ -306,6 +306,14 @@ export class index {
                 }
             }
         });
+
+        let colisionMinotaur =
+            (((this.width * this.dpr) / 2) - halfPlayer) - left < ((this.minotaur.randomX - this.worldx) + this.minotaur.size) &&
+            (((this.width * this.dpr) / 2) + halfPlayer) + right > (this.minotaur.randomX - this.worldx) &&
+            (((this.height * this.dpr) / 2) - halfPlayer) + down < ((this.minotaur.randomY - this.worldy) + this.minotaur.size) &&
+            (((this.height * this.dpr) / 2) + halfPlayer) - up > (this.minotaur.randomY - this.worldy);
+
+        return collisionTrees || colisionMinotaur;
     }
 
 
@@ -481,7 +489,7 @@ export class index {
 
             this.ctx.strokeStyle = 'black';
             this.ctx.lineWidth = 1;
-            this.ctx.strokeRect(((this.width * this.dpr) / 2) - (this.myPlayer.size / 2),((this.height * this.dpr) / 2) - (this.myPlayer.size / 2), this.myPlayer.size, this.myPlayer.size);
+            this.ctx.strokeRect(((this.width * this.dpr) / 2) - (this.myPlayer.size / 2), ((this.height * this.dpr) / 2) - (this.myPlayer.size / 2), this.myPlayer.size, this.myPlayer.size);
 
             if (this.framePlayer >= 8) { this.framePlayer = 0 }
 
