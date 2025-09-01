@@ -1,4 +1,4 @@
-export class Others {
+export class MagicBlueField {
 
     localField = "./imgs/others/";
     img: string = this.localField + "magic_field_blue.png";
@@ -22,10 +22,29 @@ export class Others {
         { y: 0, x: (64 * 11) }
     ];
     magicFieldBlue: any = {};
-    countShow:number = 0;
+    countShow: number = 0;
 
     constructor() {
         this.magicFieldBlue = { x: 100, y: 64, size: this.size, img: this.img, frames: this.frames };
+    }
+
+    drawMagicFieldBlue(ctx: CanvasRenderingContext2D, img: HTMLImageElement, width: number, height: number, dpr: number, playerSize: number) {
+
+        let fieldImg = img;
+        fieldImg.src = this.magicFieldBlue.img;
+        ctx.drawImage(fieldImg,
+            this.magicFieldBlue.frames[this.countFrames % this.magicFieldBlue.frames.length].x,
+            this.magicFieldBlue.frames[this.countFrames % this.magicFieldBlue.frames.length].y,
+            this.magicFieldBlue.size, this.magicFieldBlue.size,
+            ((width * dpr) / 2) - (playerSize / 2), ((height * dpr) / 2) - (playerSize / 2),
+            this.magicFieldBlue.size * 2, this.magicFieldBlue.size * 2);
+
+        if (this.countFrames >= this.maxFrames) { this.countFrames = 0; }
+
+        if (new Date().getTime() - this.lastFrameTime > this.frameDuration) {
+            this.countFrames++;
+            this.lastFrameTime = new Date().getTime();
+        }
     }
 
     getMagicFieldBlue() {
