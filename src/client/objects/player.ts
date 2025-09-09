@@ -112,7 +112,6 @@ export class Player {
             }
             // else if (this.keys.some((s:boolean)=> s == true)) {
             else if (this.collision(this.pressedLastKey, this.marginCollision, world.x, world.y, width, height, dpr, minotaurx, minotaury, minotaurSize)) {
-                console.log("hue");
                 if (this.pressedLastKey == this.arrowKeys.left) {
                     // this.imageDirection = this.directions.leftStop.img;
                     this.direction = this.directions.leftStop;
