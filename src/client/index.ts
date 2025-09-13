@@ -21,13 +21,7 @@ export class index {
 
     socket = io("http://localhost:3000");
 
-    //classes
-    // magicFieldBlue: Others = new Others();
-    magicFieldBlue: MagicBlueField = new MagicBlueField();
-    minotaur: Minotaur = new Minotaur();
-    player: Player = new Player();
-    trees: Trees = new Trees();
-    ground:Ground = new Ground();
+    scale: number = 64;
 
     //images
     minotaurImage = new Image();
@@ -67,6 +61,14 @@ export class index {
         right: "ArrowRight"
     }
 
+    //classes
+    // magicFieldBlue: Others = new Others();
+    magicFieldBlue: MagicBlueField = new MagicBlueField();
+    minotaur: Minotaur = new Minotaur();
+    player: Player = new Player();
+    trees: Trees = new Trees();
+    ground: Ground = new Ground();
+
     constructor() {
         this.addlisteners();
         this.addListenersControls("s");
@@ -102,11 +104,27 @@ export class index {
         this.height = allCanvas.clientHeight;
         // this.width = this.canvasObjects.clientWidth;
         // this.height = this.canvasObjects.clientHeight;
-        this.canvasObjects.width = this.width * this.dpr;
-        this.canvasObjects.height = this.height * this.dpr;
+
+        let w = this.width;
+        let h = this.height;
+
+        let sw = Math.trunc(w / this.scale);
+        let sh = Math.trunc(h / this.scale);
+
+        if (sw % 2 == 0) { sw--; }
+        if (sh % 2 == 0) { sh--; }
+
+        this.width = sw * this.scale;
+        this.height = sh * this.scale;
+
+        this.canvasObjects.width = this.width;
+        this.canvasObjects.height = this.height;
+        // this.canvasObjects.width = this.width * this.dpr;
+        // this.canvasObjects.height = this.height * this.dpr;
         this.canvasObjects.style.width = this.width + "px";
         // this.canvasObjects.style.height = this.height + "px";
-        this.canvasObjects.style.height = "900px";
+        this.canvasObjects.style.height = this.height + "px";
+        // this.canvasObjects.style.height = "900px";
 
         this.ground.contentground.sizex = this.width;
         this.ground.contentground.sizey = this.height;
@@ -114,6 +132,23 @@ export class index {
         //para fazer o chao carregar ao andar
         this.ground.groundx = this.ground.contentground.x;
         this.ground.groundy = this.ground.contentground.y;
+
+        let x = Math.trunc(this.width / this.scale) - 1;
+        x = x / 2;
+        let diffx = this.player.locationPlayer.x - x;
+        x = diffx * this.scale;
+
+        let y = Math.trunc(this.height / this.scale) - 1;
+        y = y / 2;
+        let diffy = this.player.locationPlayer.y - y;
+        y = diffy * this.scale;
+        // if(this.player.locationPlayer.y < y) zeroy = true;
+        // y = y * this.scale - (this.player.locationPlayer.y * this.scale);
+
+        this.world.x += x;
+        this.world.y += y;
+        // zerox ? this.world.x -= x : this.world.x += x;
+        // zeroy ? this.world.y -= y : this.world.y -= y;
     }
 
 
@@ -128,7 +163,7 @@ export class index {
         if (this.name) {
             this.player.drawPlayer(this.ctx!, this.playerImage, this.width, this.height, this.dpr);
             if (this.magicFieldBlue.countShow < this.magicFieldBlue.frameDuration) {
-                this.magicFieldBlue.drawMagicFieldBlue(this.ctx!, this.magicBlueFieldImage, this.width, this.height, this.dpr, this.player.size);
+                this.magicFieldBlue.drawMagicFieldBlue(this.ctx!, this.magicBlueFieldImage, this.width, this.height, this.dpr, this.player.size.x);
                 this.magicFieldBlue.countShow++;
             }
         }
@@ -202,6 +237,8 @@ export class index {
 
     joinGame() {
         if (this.player.getId()) {
+            // this.world.x = 0;
+            // this.world.y = 0;
             let input = document.getElementById("name") as HTMLInputElement;
             this.name = input.value;
             this.socket.emit("playerJoin", this.name);

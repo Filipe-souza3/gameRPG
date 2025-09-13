@@ -3,22 +3,22 @@ import { Trees } from "./trees";
 
 export class Minotaur {
 
+    escala: number = 64;
     localImage = "../imgs/minotaur/";
-    // img: string = this.localImage + "magic_field_blue.png";
-    sizeSprite: number = 64;
-    size: number = 64 + 30;
+    sizeSprite: number = this.escala;
+    size: any = { x: this.escala, y: this.escala };
     speed: number = 15;
-    radius: number = 500;
+    radius: number = 10;
     frames: any = {
         move: [
             { y: 0, x: 0 },
-            { y: 0, x: 64 },
-            { y: 0, x: (64 * 2) },
-            { y: 0, x: (64 * 3) },
-            { y: 0, x: (64 * 4) },
-            { y: 0, x: (64 * 5) },
-            { y: 0, x: (64 * 6) },
-            { y: 0, x: (64 * 7) }
+            { y: 0, x: (1 * this.escala) },
+            { y: 0, x: (2 * this.escala) },
+            { y: 0, x: (3 * this.escala) },
+            { y: 0, x: (4 * this.escala) },
+            { y: 0, x: (5 * this.escala) },
+            { y: 0, x: (6 * this.escala) },
+            { y: 0, x: (7 * this.escala) }
         ],
         stop: [
             { y: 0, x: 0 }
@@ -71,15 +71,15 @@ export class Minotaur {
         this.ctx = ctx; //deletar
 
         ctx.drawImage(minotaurImg,
-            this.minotaurDirection.frames[this.countFrames % this.minotaurDirection.frames.length].x,
-            this.minotaurDirection.frames[this.countFrames % this.minotaurDirection.frames.length].y,
-            this.sizeSprite, this.sizeSprite,
+            this.minotaurDirection.frames[this.countFrames % this.minotaurDirection.frames.length].x + 8,
+            this.minotaurDirection.frames[this.countFrames % this.minotaurDirection.frames.length].y + 8,
+            this.size.x - 16, this.size.y - 16,
             this.randomX - worldx, this.randomY - worldy,
-            this.size, this.size);
+            this.size.x, this.size.y);
 
         ctx.strokeStyle = 'black';
         ctx.lineWidth = 1;
-        ctx.strokeRect(this.randomX - worldx, this.randomY - worldy, this.size, this.size);
+        ctx.strokeRect(this.randomX - worldx, this.randomY - worldy, this.size.x, this.size.y);
 
         let now = new Date().getTime();
         if (now - this.lastFrameTime > this.frameDuration) {
@@ -171,7 +171,7 @@ export class Minotaur {
         let px = ((width * dpr) / 2);
         let py = ((height * dpr) / 2);
         let norm = { x: 0, y: 0 };
-        let halfSize = this.size / 2;
+        let halfSize = this.size.x / 2;
 
 
         //linha ataque
@@ -189,8 +189,8 @@ export class Minotaur {
         this.ctx.lineWidth = 2;
         this.ctx.stroke();
 
-        if (x > ((this.size * 0.8) * (-1)) && x < width
-            && y > ((this.size * 0.8) * (-1)) && y < height) {
+        if (x > ((this.size.x * 0.8) * (-1)) && x < width
+            && y > ((this.size.y * 0.8) * (-1)) && y < height) {
 
             let dx = px - (x + halfSize);
             let dy = py - (y + halfSize);
@@ -204,8 +204,8 @@ export class Minotaur {
                     norm = { x: (dx / length), y: (dy / length) };
                 }
 
-                console.log(length);
-                console.log(this.followPlayerDirection(x, y, px, py));
+                // console.log(length);
+                // console.log(this.followPlayerDirection(x, y, px, py));
                 let direction = this.followPlayerDirection(x, y, px, py);
                 if (!this.collision(direction, 20, this.randomX, this.randomY, width, height, dpr)) {
                     this.directionOnCollision = direction;
@@ -225,7 +225,7 @@ export class Minotaur {
                     //     this.randomY += (norm.y * this.speed);
                     // }
                     this.changeDirectionOnCollision = true;
-                    console.log("sem colisao");
+                    // console.log("sem colisao");
                 } else {
 
                     let t = true;
@@ -244,7 +244,7 @@ export class Minotaur {
                         this.changeDirectionOnCollision = false;
                     }
                     if (this.collision(this.directionOnCollision, 10, this.randomX, this.randomY, width, height, dpr)) {
- this.directionOnCollision = this.otherDirectionHunt(direction);
+                        this.directionOnCollision = this.otherDirectionHunt(direction);
                     }
                     direction = this.directionOnCollision;
 
@@ -327,10 +327,10 @@ export class Minotaur {
             // if ((e.x - worldx) > 0 && (e.x - worldx) < width
             //     && (e.y - worldy) > 0 && (e.y - worldy) < height) {
 
-            if (((e.x - this.worldX) + e.size) > ((x - this.worldX) - left) &&
-                (e.x - this.worldX) < (((x + this.size) - this.worldX) + right) &&
-                ((e.y - this.worldY) + e.size) > ((y - this.worldY) - up) &&
-                (e.y - this.worldY) < (((y + this.size) - this.worldY) + down)) {
+            if (((e.x - this.worldX) + e.size.x) > ((x - this.worldX) - left) &&
+                (e.x - this.worldX) < (((x + this.size.x) - this.worldX) + right) &&
+                ((e.y - this.worldY) + e.size.y) > ((y - this.worldY) - up) &&
+                (e.y - this.worldY) < (((y + this.size.y) - this.worldY) + down)) {
                 return true;
             }
             // }
@@ -349,10 +349,10 @@ export class Minotaur {
     }
 
     private collisionPlayer(width: number, height: number, x: number, y: number, dpr: number): boolean {
-        return (((width * dpr) / 2) - (this.player.size / 2)) < ((x - this.worldX) + this.size) &&
-            (((width * dpr) / 2) + (this.player.size / 2)) > (x - this.worldX) &&
-            (((height * dpr) / 2) - (this.player.size / 2)) < ((y - this.worldY) + this.size) &&
-            (((height * dpr) / 2) + (this.player.size / 2)) > (y - this.worldY);
+        return (((width * dpr) / 2) - (this.player.size.x / 2)) < ((x - this.worldX) + this.size.x) &&
+            (((width * dpr) / 2) + (this.player.size.x / 2)) > (x - this.worldX) &&
+            (((height * dpr) / 2) - (this.player.size.x / 2)) < ((y - this.worldY) + this.size.y) &&
+            (((height * dpr) / 2) + (this.player.size.x / 2)) > (y - this.worldY);
     }
 
     private getRandom(min: number, max: number, mult?: number): number {
@@ -381,5 +381,7 @@ export class Minotaur {
         else if (direction == this.directions.left) { return yDirection[numberDirection < 25 ? 0 : 1]; }
         else { return yDirection[numberDirection < 25 ? 0 : 1]; }
     }
+
+
 
 }

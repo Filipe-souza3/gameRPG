@@ -1,5 +1,6 @@
 export class MagicBlueField {
 
+    scale:number = 64;
     localField = "./imgs/others/";
     img: string = this.localField + "magic_field_blue.png";
     size: number = 32;
@@ -32,11 +33,20 @@ export class MagicBlueField {
 
         let fieldImg = img;
         fieldImg.src = this.magicFieldBlue.img;
+
+        let x = Math.trunc(width / this.scale) - 1;
+        x = x / 2;
+        x = x * this.scale;
+        let y = Math.trunc(height / this.scale) - 1;
+        y = y / 2;
+        y = y * this.scale;
+
         ctx.drawImage(fieldImg,
             this.magicFieldBlue.frames[this.countFrames % this.magicFieldBlue.frames.length].x,
             this.magicFieldBlue.frames[this.countFrames % this.magicFieldBlue.frames.length].y,
             this.magicFieldBlue.size, this.magicFieldBlue.size,
-            ((width * dpr) / 2) - (playerSize / 2), ((height * dpr) / 2) - (playerSize / 2),
+            x, y,
+            // ((width * dpr) / 2) - (playerSize / 2), ((height * dpr) / 2) - (playerSize / 2),
             this.magicFieldBlue.size * 2, this.magicFieldBlue.size * 2);
 
         if (this.countFrames >= this.maxFrames) { this.countFrames = 0; }

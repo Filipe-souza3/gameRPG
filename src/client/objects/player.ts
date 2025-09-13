@@ -3,21 +3,23 @@ import { Trees } from "./trees";
 
 export class Player {
 
+    scale: number = 64;
     private id?: number;
     localImage: string = "../imgs/citizen/";
-    size: number = 64;
-    speed = 1//0.5;
-    marginCollision: number = 5;
+    size: any = { x: this.scale, y: this.scale };
+    locationPlayer: any = { x: 10, y: 5 };
+    speed = 64//0.5;
+    marginCollision: number = 0;
     frames: any = {
         move: [
             { y: 0, x: 0 },
-            { y: 0, x: 64 },
-            { y: 0, x: (64 * 2) },
-            { y: 0, x: (64 * 3) },
-            { y: 0, x: (64 * 4) },
-            { y: 0, x: (64 * 5) },
-            { y: 0, x: (64 * 6) },
-            { y: 0, x: (64 * 7) }
+            { y: 0, x: (1 * this.scale) },
+            { y: 0, x: (2 * this.scale) },
+            { y: 0, x: (3 * this.scale) },
+            { y: 0, x: (4 * this.scale) },
+            { y: 0, x: (5 * this.scale) },
+            { y: 0, x: (6 * this.scale) },
+            { y: 0, x: (7 * this.scale) }
         ],
         stop: [
             { y: 0, x: 0 }
@@ -39,10 +41,14 @@ export class Player {
     }
     direction: any = this.directions.downStop;
 
+    //fazer o player andar os 64px por ciclo
+    move64: number = 0;
+    key: any = null;
+
     //keys
     keys: any = {};
     pressedLastKey: string = "";
-    delayKeyPress: number = 10;
+    delayKeyPress: number = -500;
     lastKeyPress: number = 0;
     arrowKeys: any = {
         up: "ArrowUp",
@@ -50,28 +56,44 @@ export class Player {
         left: "ArrowLeft",
         right: "ArrowRight"
     }
+    activeSetLocationPlayer: boolean = true;
 
     //class
     trees: Trees = new Trees();
 
     constructor() {
-
+        this.speed = 1
     }
 
 
     drawPlayer(ctx: CanvasRenderingContext2D, img: HTMLImageElement, width: number, height: number, dpr: number) {
         let playerImg = img;
         playerImg.src = this.direction.img;
+
+        let x = Math.trunc(width / this.scale) - 1;
+        x = x / 2;
+        x = x * this.scale;
+        let y = Math.trunc(height / this.scale) - 1;
+        y = y / 2;
+        y = y * this.scale;
+
+
+
+        let px = 1 * this.scale;
+        let py = 3 * this.scale;
+
         ctx.drawImage(
             playerImg,
             this.direction.frames[this.countFrames % this.direction.frames.length].x, this.direction.frames[this.countFrames % this.direction.frames.length].y,
             64, 64,
-            ((width * dpr) / 2) - (this.size / 2), ((height * dpr) / 2) - (this.size / 2),
-            this.size, this.size);
+            x, y,
+            // ((width * dpr) / 2) - (this.size.x / 2), ((height * dpr) / 2) - (this.size.y / 2),
+            this.size.x, this.size.y);
 
         ctx.strokeStyle = 'black';
         ctx.lineWidth = 1;
-        ctx.strokeRect(((width * dpr) / 2) - (this.size / 2), ((height * dpr) / 2) - (this.size / 2), this.size, this.size);
+        ctx.strokeRect(x, y, this.size.x, this.size.y);
+        // ctx.strokeRect(((width * dpr) / 2) - (this.size.x / 2), ((height * dpr) / 2) - (this.size.y / 2), this.size.x, this.size.y);
 
         if (this.countFrames >= 8) { this.countFrames = 0 }
 
@@ -82,74 +104,114 @@ export class Player {
 
     }
 
+
     move(keys: any, world: any, width: number, height: number, dpr: number, minotaurx: number, minotaury: number, minotaurSize: number) {
 
-        if (Object.keys(keys).length > 0) {
-            // console.log(this.keys);
-            if (keys[this.arrowKeys.up] && !(this.collision(this.arrowKeys.up, this.marginCollision, world.x, world.y, width, height, dpr, minotaurx, minotaury, minotaurSize))) {
-                world.y -= this.speed;
-                // this.imageDirection = this.directions.up.img;
-                this.direction = this.directions.up;
-                this.pressedLastKey = this.arrowKeys.up;
-            }
-            else if (keys[this.arrowKeys.left] && !(this.collision(this.arrowKeys.left, this.marginCollision, world.x, world.y, width, height, dpr, minotaurx, minotaury, minotaurSize))) {
-                world.x -= this.speed;
-                // this.imageDirection = this.directions.left.img;
-                this.direction = this.directions.left;
-                this.pressedLastKey = this.arrowKeys.left;
-            }
-            else if (keys[this.arrowKeys.down] && !this.collision(this.arrowKeys.down, this.marginCollision, world.x, world.y, width, height, dpr, minotaurx, minotaury, minotaurSize)) {
-                world.y += this.speed;
-                // this.imageDirection = this.directions.down.img;
-                this.direction = this.directions.down;
-                this.pressedLastKey = this.arrowKeys.down;
-            }
-            else if (keys[this.arrowKeys.right] && !this.collision(this.arrowKeys.right, this.marginCollision, world.x, world.y, width, height, dpr, minotaurx, minotaury, minotaurSize)) {
-                world.x += this.speed;
-                // this.imageDirection = this.directions.right.img;
-                this.direction = this.directions.right;
-                this.pressedLastKey = this.arrowKeys.right;
-            }
-            // else if (this.keys.some((s:boolean)=> s == true)) {
-            else if (this.collision(this.pressedLastKey, this.marginCollision, world.x, world.y, width, height, dpr, minotaurx, minotaury, minotaurSize)) {
-                if (this.pressedLastKey == this.arrowKeys.left) {
-                    // this.imageDirection = this.directions.leftStop.img;
-                    this.direction = this.directions.leftStop;
-                }
-                else if (this.pressedLastKey == this.arrowKeys.right) {
-                    // this.imageDirection = this.directions.rightStop.img;
-                    this.direction = this.directions.rightStop;
-                }
-                else if (this.pressedLastKey == this.arrowKeys.up) {
-                    // this.imageDirection = this.directions.upStop.img;
-                    this.direction = this.directions.upStop;
-                }
-                else if (this.pressedLastKey == this.arrowKeys.down) {
-                    // this.imageDirection = this.directions.downStop.img;
-                    this.direction = this.directions.downStop;
-                }
+        if (this.key === null && Object.keys(keys).length > 0 && Object.values(keys).filter(Boolean).length === 1) { this.key = structuredClone(keys); }
+        if ((new Date().getTime() - this.lastKeyPress) > this.delayKeyPress) {
 
+            if (this.move64 >= 64) {
+                console.log(keys); console.log(this.key);
+                this.setLocationPlayer(this.key, this.activeSetLocationPlayer); this.key = null; this.move64 = 0; this.stop();
             }
+            if (Object.keys(keys).length > 0) {
+
+                if (this.key && this.key[this.arrowKeys.up]) {
+
+                    let check = true;
+                    if (this.move64 == 0) {
+                        if (this.collision(this.arrowKeys.up)) {
+                            check = false;
+                            this.move64 = 64;
+                            this.activeSetLocationPlayer = false;
+                        }
+                    }
+                    if (check) {
+                        world.y -= this.speed;
+                        this.direction = this.directions.up;
+                        this.pressedLastKey = this.arrowKeys.up;
+                        this.move64++;
+                    }
+                }
+                else if (this.key && this.key[this.arrowKeys.left]) {
+                    // else if (keys[this.arrowKeys.left] && !(this.collision(this.arrowKeys.left, this.marginCollision, world.x, world.y, width, height, dpr, minotaurx, minotaury, minotaurSize))) {
+                    let check = true;
+                    if (this.move64 == 0) {
+                        if (this.collision(this.arrowKeys.left)) {
+                            check = false;
+                            this.move64 = 64;
+                            this.activeSetLocationPlayer = false;
+                        }
+                    }
+                    if (check) {
+                        world.x -= this.speed;
+                        this.direction = this.directions.left;
+                        this.pressedLastKey = this.arrowKeys.left;
+                        this.move64++;
+
+                    }
+                }
+                else if (this.key && this.key[this.arrowKeys.down]) {
+                    // else if (keys[this.arrowKeys.down] && !this.collision(this.arrowKeys.down, this.marginCollision, world.x, world.y, width, height, dpr, minotaurx, minotaury, minotaurSize)) {
+                    let check = true;
+                    if (this.move64 == 0) {
+                        if (this.collision(this.arrowKeys.down)) {
+                            check = false;
+                            this.move64 = 64;
+                            this.activeSetLocationPlayer = false;
+                        }
+                    }
+                    if (check) {
+                        world.y += this.speed;
+                        this.direction = this.directions.down;
+                        this.pressedLastKey = this.arrowKeys.down;
+                        this.move64++;
+                    }
+                }
+                else if (this.key && this.key[this.arrowKeys.right]) {
+                    // else if (keys[this.arrowKeys.right] && !this.collision(this.arrowKeys.right, this.marginCollision, world.x, world.y, width, height, dpr, minotaurx, minotaury, minotaurSize)) {
+                    let check = true;
+                    if (this.move64 == 0) {
+                        if (this.collision(this.arrowKeys.right)) {
+                            check = false;
+                            this.move64 = 64;
+                            this.activeSetLocationPlayer = false;
+                        }
+                    }
+                    if (check) {
+                        world.x += this.speed;
+                        this.direction = this.directions.right;
+                        this.pressedLastKey = this.arrowKeys.right;
+                        this.move64++;
+
+                    }
+                }
+            }
+            this.lastKeyPress = new Date().getTime();
         }
     }
 
-    collision(key: string, futurePosition: number, worldx: number, worldy: number, width: number, height: number, dpr: number, minotaurx: number, minotaury: number, minotaurSize: number) {
+    collision1(key: string, futurePosition: number, worldx: number, worldy: number, width: number, height: number, dpr: number, minotaurx: number, minotaury: number, minotaurSize: number) {
         let left = 0, right = 0, up = 0, down = 0;
         if (key == this.arrowKeys.left) { left = futurePosition }
         if (key == this.arrowKeys.right) { right = futurePosition; }
         if (key == this.arrowKeys.up) { up = futurePosition; }
         if (key == this.arrowKeys.down) { down = futurePosition; }
-        let halfPlayer = this.size / 2;
+        let halfPlayer = this.size.x / 2;
 
         let collisionTrees = this.trees.allTrees.some((e) => {
 
             if ((e.x - worldx) > 0 && (e.x - worldx) < width
                 && (e.y - worldy) > 0 && (e.y - worldy) < height) {
 
-                if (((e.x - worldx) + e.size + halfPlayer) >= ((width * dpr) / 2) - left
-                    && (e.x - worldx) <= (((width * dpr) / 2) + halfPlayer + right)
-                    && ((e.y - worldy) + e.size + halfPlayer) >= ((height * dpr) / 2) - up
-                    && (e.y - worldy) <= (((height * dpr) / 2) + halfPlayer + down)) {
+                if (((e.x - worldx) + e.size.x + halfPlayer) >= (((width) / 2)) - left
+                    && (e.x - worldx) <= ((((width) / 2)) + halfPlayer + right)
+                    && ((e.y - worldy) + e.size.y + halfPlayer) >= ((height) / 2) - up
+                    && (e.y - worldy) <= (((height) / 2) + halfPlayer + down)) {
+                    // if (((e.x - worldx) + e.size.x + halfPlayer) >= ((width * dpr) / 2) - left
+                    //     && (e.x - worldx) <= (((width * dpr) / 2) + halfPlayer + right)
+                    //     && ((e.y - worldy) + e.size.y + halfPlayer) >= ((height * dpr) / 2) - up
+                    //     && (e.y - worldy) <= (((height * dpr) / 2) + halfPlayer + down)) {
 
                     return true;
                 }
@@ -165,8 +227,28 @@ export class Player {
         return collisionTrees || colisionMinotaur;
     }
 
-    stop(keys: any) {
-        if (!keys[this.arrowKeys.up] && !keys[this.arrowKeys.down] && !keys[this.arrowKeys.left] && !keys[this.arrowKeys.right]) {
+    collision(key: string) {
+
+        let left = 0, right = 0, up = 0, down = 0;
+        if (key == this.arrowKeys.left) { left = 1 }
+        else if (key == this.arrowKeys.right) { right = 1; }
+        else if (key == this.arrowKeys.up) { up = 1 }
+        else if (key == this.arrowKeys.down) { down = 1 }
+
+        return this.trees.allTrees.some((e) => {
+            if (e.x == this.locationPlayer.x && e.y == (this.locationPlayer.y - up) ||
+                e.x == this.locationPlayer.x && e.y == (this.locationPlayer.y + down) ||
+                e.y == this.locationPlayer.y && e.x == (this.locationPlayer.x - left) ||
+                e.y == this.locationPlayer.y && e.x == (this.locationPlayer.x + right)) {
+                console.log("arvore X" + e.x + " Y" + e.y);
+                return true;
+            }
+        });
+    }
+
+    stop(keys?: any) {
+        if (this.key === null) {
+            // if (!keys[this.arrowKeys.up] && !keys[this.arrowKeys.down] && !keys[this.arrowKeys.left] && !keys[this.arrowKeys.right]) {
             if (this.pressedLastKey == this.arrowKeys.up) {
                 // this.imageDirection = this.directions.upStop.img; 
                 this.direction = this.directions.upStop;
@@ -184,6 +266,17 @@ export class Player {
                 this.direction = this.directions.rightStop;
             }
         }
+    }
+
+    setLocationPlayer(key: string, active: boolean) {
+        console.log(key);
+        if (active) {
+            if (key[this.arrowKeys.up]) this.locationPlayer.y--;
+            else if (key[this.arrowKeys.down]) this.locationPlayer.y++;
+            else if (key[this.arrowKeys.right]) this.locationPlayer.x++;
+            else if (key[this.arrowKeys.left]) this.locationPlayer.x--;
+        }
+        this.activeSetLocationPlayer = true;
     }
 
     setId(value: number) {
