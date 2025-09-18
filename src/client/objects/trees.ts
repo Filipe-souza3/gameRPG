@@ -3,7 +3,12 @@ export class Trees {
 
     localImage = "../imgs/trees/";
     scale: number = 64;
+    // depois fazer campo de colisao de arvores e outras deixar passar por baixo
     allTrees: any[] = [
+        { x: 2, y: 5, size: { x: 2, y: 2 }, color: "orange", img: this.localImage + "tree.webp" },
+        { x: 8, y: 5, size: { x: 2, y: 2 }, color: "orange", img: this.localImage + "tree.webp" },
+        { x: 6, y: 1, size: { x: 2, y: 2 }, color: "orange", img: this.localImage + "tree.webp" },
+        { x: 6, y: 7, size: { x: 2, y: 2 }, color: "orange", img: this.localImage + "tree.webp" },
         { x: 1, y: 1, size: { x: 2, y: 2 }, color: "orange", img: this.localImage + "tree.webp" },
         { x: 5, y: 7, size: { x: 2, y: 2 }, color: "orange", img: this.localImage + "tree.webp" },
         { x: 4, y: 2, size: { x: 2, y: 2 }, color: "orange", img: this.localImage + "tree.webp" },

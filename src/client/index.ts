@@ -158,7 +158,7 @@ export class index {
 
         //se estiver legando, ver se passar worldx e worldy separados
         this.ground.drawGround(this.ctx!, this.world.x, this.world.y, this.width, this.height);
-        this.minotaur.drawMinotaur(this.ctx!, this.world.x, this.world.y, this.minotaurImage, this.width, this.height, this.dpr);
+        this.minotaur.drawMinotaur(this.ctx!, this.world, this.minotaurImage, this.width, this.height, this.dpr);
 
         if (this.name) {
             this.player.drawPlayer(this.ctx!, this.playerImage, this.width, this.height, this.dpr);
@@ -231,7 +231,7 @@ export class index {
         document.addEventListener("keyup", (event) => {
             this.keys[event.key] = false;
             // this.stopPlayer();
-            this.player.stop(this.keys);
+            this.player.stop();
         });
     }
 

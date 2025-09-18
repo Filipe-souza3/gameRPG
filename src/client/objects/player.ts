@@ -7,8 +7,10 @@ export class Player {
     private id?: number;
     localImage: string = "../imgs/citizen/";
     size: any = { x: this.scale, y: this.scale };
-    locationPlayer: any = { x: 10, y: 5 };
-    speed = 64//0.5;
+    locationPlayer: any = { x: 6, y: 5 };
+    speed:number = 2;
+    tiles:number = 1 * this.speed;
+    cicle:number = 64 / this.speed;
     marginCollision: number = 0;
     frames: any = {
         move: [
@@ -48,7 +50,7 @@ export class Player {
     //keys
     keys: any = {};
     pressedLastKey: string = "";
-    delayKeyPress: number = -500;
+    delayKeyPress: number = 15;
     lastKeyPress: number = 0;
     arrowKeys: any = {
         up: "ArrowUp",
@@ -61,9 +63,7 @@ export class Player {
     //class
     trees: Trees = new Trees();
 
-    constructor() {
-        this.speed = 1
-    }
+    constructor() { }
 
 
     drawPlayer(ctx: CanvasRenderingContext2D, img: HTMLImageElement, width: number, height: number, dpr: number) {
@@ -77,14 +77,12 @@ export class Player {
         y = y / 2;
         y = y * this.scale;
 
+        // let px = 1 * this.scale;
+        // let py = 3 * this.scale;
 
-
-        let px = 1 * this.scale;
-        let py = 3 * this.scale;
-
-        ctx.drawImage(
-            playerImg,
-            this.direction.frames[this.countFrames % this.direction.frames.length].x, this.direction.frames[this.countFrames % this.direction.frames.length].y,
+        ctx.drawImage(playerImg,
+            this.direction.frames[this.countFrames % this.direction.frames.length].x, 
+            this.direction.frames[this.countFrames % this.direction.frames.length].y,
             64, 64,
             x, y,
             // ((width * dpr) / 2) - (this.size.x / 2), ((height * dpr) / 2) - (this.size.y / 2),
@@ -110,8 +108,8 @@ export class Player {
         if (this.key === null && Object.keys(keys).length > 0 && Object.values(keys).filter(Boolean).length === 1) { this.key = structuredClone(keys); }
         if ((new Date().getTime() - this.lastKeyPress) > this.delayKeyPress) {
 
-            if (this.move64 >= 64) {
-                console.log(keys); console.log(this.key);
+            if (this.move64 >= this.cicle) {
+                // console.log(keys); console.log(this.key);
                 this.setLocationPlayer(this.key, this.activeSetLocationPlayer); this.key = null; this.move64 = 0; this.stop();
             }
             if (Object.keys(keys).length > 0) {
@@ -127,7 +125,7 @@ export class Player {
                         }
                     }
                     if (check) {
-                        world.y -= this.speed;
+                        world.y -= this.tiles;
                         this.direction = this.directions.up;
                         this.pressedLastKey = this.arrowKeys.up;
                         this.move64++;
@@ -144,7 +142,7 @@ export class Player {
                         }
                     }
                     if (check) {
-                        world.x -= this.speed;
+                        world.x -= this.tiles;
                         this.direction = this.directions.left;
                         this.pressedLastKey = this.arrowKeys.left;
                         this.move64++;
@@ -162,7 +160,7 @@ export class Player {
                         }
                     }
                     if (check) {
-                        world.y += this.speed;
+                        world.y += this.tiles;
                         this.direction = this.directions.down;
                         this.pressedLastKey = this.arrowKeys.down;
                         this.move64++;
@@ -179,7 +177,7 @@ export class Player {
                         }
                     }
                     if (check) {
-                        world.x += this.speed;
+                        world.x += this.tiles;
                         this.direction = this.directions.right;
                         this.pressedLastKey = this.arrowKeys.right;
                         this.move64++;
@@ -191,41 +189,42 @@ export class Player {
         }
     }
 
-    collision1(key: string, futurePosition: number, worldx: number, worldy: number, width: number, height: number, dpr: number, minotaurx: number, minotaury: number, minotaurSize: number) {
-        let left = 0, right = 0, up = 0, down = 0;
-        if (key == this.arrowKeys.left) { left = futurePosition }
-        if (key == this.arrowKeys.right) { right = futurePosition; }
-        if (key == this.arrowKeys.up) { up = futurePosition; }
-        if (key == this.arrowKeys.down) { down = futurePosition; }
-        let halfPlayer = this.size.x / 2;
+    // collision1(key: string, futurePosition: number, worldx: number, worldy: number, width: number, height: number, dpr: number, minotaurx: number, minotaury: number, minotaurSize: number) {
+    //     let left = 0, right = 0, up = 0, down = 0;
+    //     if (key == this.arrowKeys.left) { left = futurePosition }
+    //     if (key == this.arrowKeys.right) { right = futurePosition; }
+    //     if (key == this.arrowKeys.up) { up = futurePosition; }
+    //     if (key == this.arrowKeys.down) { down = futurePosition; }
+    //     let halfPlayer = this.size.x / 2;
 
-        let collisionTrees = this.trees.allTrees.some((e) => {
+    //     let collisionTrees = this.trees.allTrees.some((e) => {
 
-            if ((e.x - worldx) > 0 && (e.x - worldx) < width
-                && (e.y - worldy) > 0 && (e.y - worldy) < height) {
+    //         if ((e.x - worldx) > 0 && (e.x - worldx) < width
+    //             && (e.y - worldy) > 0 && (e.y - worldy) < height) {
 
-                if (((e.x - worldx) + e.size.x + halfPlayer) >= (((width) / 2)) - left
-                    && (e.x - worldx) <= ((((width) / 2)) + halfPlayer + right)
-                    && ((e.y - worldy) + e.size.y + halfPlayer) >= ((height) / 2) - up
-                    && (e.y - worldy) <= (((height) / 2) + halfPlayer + down)) {
-                    // if (((e.x - worldx) + e.size.x + halfPlayer) >= ((width * dpr) / 2) - left
-                    //     && (e.x - worldx) <= (((width * dpr) / 2) + halfPlayer + right)
-                    //     && ((e.y - worldy) + e.size.y + halfPlayer) >= ((height * dpr) / 2) - up
-                    //     && (e.y - worldy) <= (((height * dpr) / 2) + halfPlayer + down)) {
+    //             if (((e.x - worldx) + e.size.x + halfPlayer) >= (((width) / 2)) - left
+    //                 && (e.x - worldx) <= ((((width) / 2)) + halfPlayer + right)
+    //                 && ((e.y - worldy) + e.size.y + halfPlayer) >= ((height) / 2) - up
+    //                 && (e.y - worldy) <= (((height) / 2) + halfPlayer + down)) {
+    //                 // if (((e.x - worldx) + e.size.x + halfPlayer) >= ((width * dpr) / 2) - left
+    //                 //     && (e.x - worldx) <= (((width * dpr) / 2) + halfPlayer + right)
+    //                 //     && ((e.y - worldy) + e.size.y + halfPlayer) >= ((height * dpr) / 2) - up
+    //                 //     && (e.y - worldy) <= (((height * dpr) / 2) + halfPlayer + down)) {
 
-                    return true;
-                }
-            }
-        });
+    //                 return true;
+    //             }
+    //         }
+    //     });
 
-        let colisionMinotaur =
-            (((width * dpr) / 2) - halfPlayer) - left < ((minotaurx - worldx) + minotaurSize) &&
-            (((width * dpr) / 2) + halfPlayer) + right > (minotaurx - worldx) &&
-            (((height * dpr) / 2) - halfPlayer) + down < ((minotaury - worldy) + minotaurSize) &&
-            (((height * dpr) / 2) + halfPlayer) - up > (minotaury - worldy);
+    //     let colisionMinotaur =
+    //         (((width * dpr) / 2) - halfPlayer) - left < ((minotaurx - worldx) + minotaurSize) &&
+    //         (((width * dpr) / 2) + halfPlayer) + right > (minotaurx - worldx) &&
+    //         (((height * dpr) / 2) - halfPlayer) + down < ((minotaury - worldy) + minotaurSize) &&
+    //         (((height * dpr) / 2) + halfPlayer) - up > (minotaury - worldy);
 
-        return collisionTrees || colisionMinotaur;
-    }
+    //     return collisionTrees || colisionMinotaur;
+    // }
+
 
     collision(key: string) {
 
@@ -235,41 +234,51 @@ export class Player {
         else if (key == this.arrowKeys.up) { up = 1 }
         else if (key == this.arrowKeys.down) { down = 1 }
 
+        let px = this.locationPlayer.x;
+        let py = this.locationPlayer.y;
         return this.trees.allTrees.some((e) => {
-            if (e.x == this.locationPlayer.x && e.y == (this.locationPlayer.y - up) ||
-                e.x == this.locationPlayer.x && e.y == (this.locationPlayer.y + down) ||
-                e.y == this.locationPlayer.y && e.x == (this.locationPlayer.x - left) ||
-                e.y == this.locationPlayer.y && e.x == (this.locationPlayer.x + right)) {
-                console.log("arvore X" + e.x + " Y" + e.y);
-                return true;
+            let maxy = (e.y + e.size.y) - 1;
+            let maxx = (e.x + e.size.x) - 1;
+
+            if (key == this.arrowKeys.up) {
+                if (maxy == (py - 1) && (px >= e.x && px <= maxx)) {
+                    return true;
+                }
+            }
+            else if (key == this.arrowKeys.down) {
+                if (e.y == (py + 1) && (px >= e.x && px <= maxx)) {
+                    return true;
+                }
+            }
+            else if (key == this.arrowKeys.right) {
+                if (e.x == (px + 1) && (py >= e.y && py <= maxy)) {
+                    return true;
+                }
+            }
+            else if (key == this.arrowKeys.left) {
+                if (maxx == (px - 1) && (py >= e.y && py <= maxy)) {
+                    return true;
+                }
             }
         });
     }
 
-    stop(keys?: any) {
+    stop() {
         if (this.key === null) {
-            // if (!keys[this.arrowKeys.up] && !keys[this.arrowKeys.down] && !keys[this.arrowKeys.left] && !keys[this.arrowKeys.right]) {
             if (this.pressedLastKey == this.arrowKeys.up) {
-                // this.imageDirection = this.directions.upStop.img; 
                 this.direction = this.directions.upStop;
-            }
-            if (this.pressedLastKey == this.arrowKeys.down) {
-                // this.imageDirection = this.directions.downStop.img; 
+            } else if (this.pressedLastKey == this.arrowKeys.down) {
                 this.direction = this.directions.downStop;
-            }
-            if (this.pressedLastKey == this.arrowKeys.left) {
-                // this.imageDirection = this.directions.leftStop.img; 
+            } else if (this.pressedLastKey == this.arrowKeys.left) {
                 this.direction = this.directions.leftStop;
-            }
-            if (this.pressedLastKey == this.arrowKeys.right) {
-                // this.imageDirection = this.directions.rightStop.img; 
+            } else if (this.pressedLastKey == this.arrowKeys.right) {
                 this.direction = this.directions.rightStop;
             }
         }
     }
 
     setLocationPlayer(key: string, active: boolean) {
-        console.log(key);
+        // console.log(key);
         if (active) {
             if (key[this.arrowKeys.up]) this.locationPlayer.y--;
             else if (key[this.arrowKeys.down]) this.locationPlayer.y++;
