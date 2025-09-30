@@ -1,3 +1,4 @@
+import { EventEmitter } from "./eventEmitter";
 import { Player } from "./player";
 import { Trees } from "./trees";
 
@@ -7,9 +8,9 @@ export class Minotaur {
     localImage = "../imgs/minotaur/";
     sizeSprite: number = this.scale;
     size: any = { x: this.scale, y: this.scale };
-    locationMinotaur: any = { x: 6, y: 5 };
+    locationMinotaur: any = { x: 6, y: 10 };
 
-    radius: number = 10;
+    radius: number = 36;
     frames: any = {
         move: [
             { y: 0, x: 0 },
@@ -58,15 +59,32 @@ export class Minotaur {
     worldX: number = 0
     worldY: number = 0
 
+    //pathfinding
+    activePathfinding: boolean = true;
+
     //class
     trees: Trees = new Trees();
     player: Player = new Player();
 
+    eventEmitter!: EventEmitter;
+
     constructor() { }
+
+
+    setEmitter(eventEmitter: EventEmitter) {
+        this.eventEmitter = eventEmitter;
+        this.eventEmitter.on("playerMoved", (location: any) => {
+            this.player.locationPlayer.x = location.x;
+            this.player.locationPlayer.y = location.y;
+        });
+
+    }
 
     drawMinotaur(ctx: CanvasRenderingContext2D, world: any, img: HTMLImageElement, width: number, height: number, dpr: number): void {
         let minotaurImg = img;
         minotaurImg.src = this.minotaurDirection.img;
+
+
 
         this.worldX = world.x;
         this.worldY = world.y;
@@ -83,6 +101,13 @@ export class Minotaur {
         ctx.lineWidth = 1;
         ctx.strokeRect(this.randomX - world.x, this.randomY - world.y, this.size.x, this.size.y);
 
+        //raio de ataque
+        this.ctx.beginPath();
+        this.ctx.arc(((this.randomX - world.x) + 32), ((this.randomY - world.y) + 32), (this.radius * this.scale), 0, 2 * Math.PI);
+        this.ctx.strokeStyle = 'red';
+        this.ctx.lineWidth = 2;
+        this.ctx.stroke();
+
         let now = new Date().getTime();
         if (now - this.lastFrameTime > this.frameDuration) {
             this.countFrames++;
@@ -92,113 +117,105 @@ export class Minotaur {
         this.walkRandom(world, width, height, dpr);
     }
 
-    // drawMinotaur(ctx: CanvasRenderingContext2D, worldx: number, worldy: number, img: HTMLImageElement, width: number, height: number, dpr: number): void {
-    //     let minotaurImg = img;
-    //     minotaurImg.src = this.minotaurDirection.img;
-
-    //     this.worldX = worldx;
-    //     this.worldY = worldy;
-    //     this.ctx = ctx; //deletar
-
-    //     ctx.drawImage(minotaurImg,
-    //         this.minotaurDirection.frames[this.countFrames % this.minotaurDirection.frames.length].x + 8,
-    //         this.minotaurDirection.frames[this.countFrames % this.minotaurDirection.frames.length].y + 8,
-    //         this.size.x - 16, this.size.y - 16,
-    //         this.randomX - worldx, this.randomY - worldy,
-    //         this.size.x, this.size.y);
-
-    //     ctx.strokeStyle = 'black';
-    //     ctx.lineWidth = 1;
-    //     ctx.strokeRect(this.randomX - worldx, this.randomY - worldy, this.size.x, this.size.y);
-
-    //     let now = new Date().getTime();
-    //     if (now - this.lastFrameTime > this.frameDuration) {
-    //         this.countFrames++;
-    //         this.lastFrameTime = now;
-
-    //         this.walkRandom(worldx, worldy, width, height, dpr);
-    //     }
-    // }
 
     speed: number = 2;
     move64: number = 0;
     tiles: number = 1 * this.speed;
-    cicle: number = 64 / this.speed;
+    cycle: number = 64 / this.speed;
     delayTime: number = 15;
     lastTime: number = 0;
     qtyTilesRandom: number = 0;
-    maxTilesRandom: number = this.getRandom(1, 5);
+    // maxTilesRandom: number = this.getRandom(1, 5);
+    maxTilesRandom: number = 0;
     stopMoviment: boolean = true;
     activeSetLocationMinotaur: boolean = true;
+    attacking: boolean = false;
+    endCicle: boolean = false;
     private walkRandom(world: any, width: number, height: number, dpr: number): void {
 
-        if ((new Date().getTime() - this.lastTime) > this.delayTime) {
-
-            // this.directionRadom = this.directions.up; // se quiser andar random comentar
-            if (this.move64 >= this.cicle) {
-
-                this.setLocationMinotaur(this.directionRadom, this.activeSetLocationMinotaur);
-                console.log(this.locationMinotaur);
-                this.move64 = 0;
-
+        if ((new Date().getTime() - this.lastTime) < this.delayTime) { return; }
+        // this.directionRadom = this.directions.up; // se quiser andar random comentar
+        // this.directionRadom = this.directions.right; //deletar testes
+        if (this.move64 >= this.cycle) {
+            // this.directionRadom = this.checkIsOutMap(this.directionRadom);
+            console.log("1 CICLO WALK");
+            this.move64 = 0;
+            this.setLocationMinotaur(this.directionRadom, this.activeSetLocationMinotaur || this.attacking);
+            
+            if (!this.attacking) {
                 this.qtyTilesRandom++;
+                this.activeSetLocationMinotaur = false;
+                
                 if (this.qtyTilesRandom >= this.maxTilesRandom) {
                     this.stop();
                     this.stopMoviment = false;
-                    this.activeSetLocationMinotaur = false;
+                    
                     setTimeout(() => {
                         this.stopMoviment = true;
-                        this.directionRadom = this.randomDirection(); 
-                        // this.directionRadom = this.directions.right; // se quiser andar random comentar
+                        this.directionRadom = this.directions.right;
+                        this.directionRadom = this.randomDirection();
                         this.qtyTilesRandom = 0;
                         this.maxTilesRandom = this.getRandom(1, 5);
-                    // }, 100);
-                    }, this.getRandom(1000, 3000));
+                    }, this.getRandom(500, 1500));
                 }
             }
-
-            if (this.stopMoviment) {
-                if (!this.collision()) {
-                    this.activeSetLocationMinotaur = true;
-                    if (this.directionRadom == this.directions.up) {
-                        this.randomX += this.getRandom(0, 0);
-                        this.randomY -= this.tiles;
-
-                        this.minotaurDirection = this.allMinotaurDirections.up;
-                        this.move64++;
-                    }
-                    else if (this.directionRadom == this.directions.right) {
-                        this.randomX += this.tiles;
-                        this.randomY += this.getRandom(0, 0);
-
-                        this.minotaurDirection = this.allMinotaurDirections.right;
-                        this.move64++;
-
-                    }
-                    else if (this.directionRadom == this.directions.left) {
-                        this.randomX -= this.tiles;
-                        this.randomY += this.getRandom(0, 0);
-
-                        this.minotaurDirection = this.allMinotaurDirections.left;
-                        this.move64++;
-
-                    }
-                    else if (this.directionRadom == this.directions.down) {
-                        this.randomX += this.getRandom(0, 0);
-                        this.randomY += this.tiles;
-
-                        this.minotaurDirection = this.allMinotaurDirections.down;
-                        this.move64++;
-                    }
-                } else {
-                    this.activeSetLocationMinotaur = false;
-                    this.move64 = 65;
-                    this.qtyTilesRandom = this.maxTilesRandom;
-                }
-            }
-            this.countRandom++;
-            this.lastTime = new Date().getTime();
         }
+
+        // if (this.stopMoviment) {
+        if (this.move64 == 0) this.attacking = this.attack();
+        if (!this.collision() && !this.attacking && this.stopMoviment && this.move64Attack == 0) {
+
+            this.directionRadom = this.checkIsOutMap(this.directionRadom);
+            this.activeSetLocationMinotaur = true;
+            this.endCicle = true;
+            console.log("walk rodando");
+
+            if (this.directionRadom == this.directions.up) {
+                this.randomY -= this.tiles;
+                this.minotaurDirection = this.allMinotaurDirections.up;
+                this.move64++;
+
+            }
+            else if (this.directionRadom == this.directions.right) {
+                this.randomX += this.tiles;
+                this.minotaurDirection = this.allMinotaurDirections.right;
+                this.move64++;
+
+            }
+            else if (this.directionRadom == this.directions.left) {
+                this.randomX -= this.tiles;
+                this.minotaurDirection = this.allMinotaurDirections.left;
+                this.move64++;
+
+            }
+            else if (this.directionRadom == this.directions.down) {
+                this.randomY += this.tiles;
+                this.minotaurDirection = this.allMinotaurDirections.down;
+                this.move64++;
+            }
+
+        } else {
+            this.activeSetLocationMinotaur = false;
+            // if (!this.attacking) this.m;ove64 = 65;
+            this.qtyTilesRandom = this.maxTilesRandom;
+        }
+        // }
+        this.countRandom++;
+        this.lastTime = new Date().getTime();
+        // }
+    }
+
+    private checkIsOutMap(direction: string) {
+        if (direction == this.directions.left) {
+            if (this.locationMinotaur.x == 0) {
+                return this.directions.right;
+            }
+        } else if (direction == this.directions.up) {
+            if (this.locationMinotaur.y == 0) {
+                return this.directions.down;
+            }
+        }
+        return direction;
     }
 
 
@@ -217,13 +234,15 @@ export class Minotaur {
     }
 
     private setLocationMinotaur(direction: string, active: boolean) {
-        console.log(direction);
         if (active) {
             if (direction == this.directions.up) this.locationMinotaur.y--;
             else if (direction == this.directions.down) this.locationMinotaur.y++;
             else if (direction == this.directions.right) this.locationMinotaur.x++;
             else if (direction == this.directions.left) this.locationMinotaur.x--;
         }
+        console.log(this.locationMinotaur);
+        console.log(this.player.locationPlayer);
+        console.log("-------------------------");
         this.activeSetLocationMinotaur = true;
     }
 
@@ -299,8 +318,11 @@ export class Minotaur {
     //     }
     // }
 
-    changeDirectionOnCollision: boolean = true;
-    directionOnCollision: string = "down";
+
+    //nao deletar followPlayer
+
+    // changeDirectionOnCollision: boolean = true;
+    // directionOnCollision: string = "down";
     // private followPlayer(worldx: number, worldy: number, width: number, height: number, dpr: number): boolean {
 
     //     let x = this.randomX - worldx;
@@ -435,38 +457,302 @@ export class Minotaur {
     //     return false;
     // }
 
-    private followPlayerDirection(x: number, y: number, px: number, py: number): string {
-        if (Math.abs(x - px) > Math.abs(y - py)) {
-            if ((x - px) > 0) {
-                return this.directions.left;
-            } else {
-                return this.directions.right;
+    move64Attack: number = 0;
+    // oneCycle: boolean = false;
+    dx: number = 0;
+    dy: number = 0;
+    pathAttack: any;
+
+    coordOld: any;
+    coord: any;
+    endOld: any;
+    //depois excluir os paramtros pois vai egar a localizaçao od player pelo listeners
+    private attack(world?: any, width?: number, height?: number, dpr?: number) {
+        if (this.player.locationPlayer.x == 0 || this.locationMinotaur.x == 0 || this.player.locationPlayer.y == 0 || this.locationMinotaur.y == 0) {
+            this.coordOld = undefined;
+            return false;
+        }
+
+
+        let dx = Math.abs(this.player.locationPlayer.x - this.locationMinotaur.x);
+        let dy = Math.abs(this.player.locationPlayer.y - this.locationMinotaur.y);
+
+        let length = Math.hypot(dx, dy);
+        // console.log(`dx ${dx}, dy ${dy}, length ${length}`);
+
+        // if (length < this.radius || this.oneCycle) {
+        // if (length > this.radius && !this.oneCycle) { this.activePathfinding = true; console.log("return"); return false; }
+        if (length > this.radius && this.move64Attack == 0) { this.coordOld = undefined; this.activePathfinding = true; console.log("return"); return false; }
+
+
+        // if (this.activePathfinding) {
+        //     this.pathAttack = this.pathFinding();
+        //     this.activePathfinding = false;
+        // }
+
+
+        if (this.move64Attack == 0) {
+
+            if ((!this.endOld || this.endOld.x != this.player.locationPlayer.x || this.endOld.y != this.player.locationPlayer.y) || 
+                (Math.abs(this.player.locationPlayer.x - this.locationMinotaur.x) > 1 || Math.abs(this.player.locationPlayer.y - this.locationMinotaur.y) > 1 )) {
+            // if (!this.endOld ) {
+                let clonePlayer = structuredClone(this.player.locationPlayer);
+                this.pathAttack = [];
+                this.pathAttack = this.pathFinding({ x: clonePlayer.x, y: clonePlayer.y });
+                this.endOld = clonePlayer;
             }
-        } else {
-            if ((y - py) > 0) {
-                return this.directions.up;
+
+            if (this.pathAttack && this.pathAttack.length > 0) {
+                this.coord = this.pathAttack.shift();
+            }
+
+            this.dx = this.locationMinotaur.x - this.player.locationPlayer.x;
+            this.dy = this.locationMinotaur.y - this.player.locationPlayer.y;
+            // console.log(this.directionRadom);
+            this.directionRadom = this.checkIsOutMap(this.directionRadom);
+            // console.log(this.directionRadom);
+        }
+
+        if (this.move64Attack >= this.cycle) {
+            // this.coord = this.pathAttack.shift();
+            console.log("1 CICLO ATTACK");
+            this.coordOld = this.coord;
+            this.coord = []; //testeando
+            this.move64Attack = 0;
+            // this.oneC;ycle = false;
+            this.dx = 0;
+            this.dy = 0;
+            this.setLocationMinotaur(this.directionRadom, true);
+        }
+
+        if (!this.coordOld) { this.coordOld = structuredClone(this.locationMinotaur); }
+        if (!this.coord && this.coord.length <= 0) {this.coordOld = undefined; return false; }
+        if(this.move64 > 0){this.coordOld = undefined; return false;}
+
+
+        // let direction;
+        if (this.coord.x > this.coordOld.x) {
+            // direction = this.directions.right;
+            this.move64Attack++;
+            this.directionRadom = this.directions.right;
+            this.minotaurDirection = this.allMinotaurDirections.right;
+            this.randomX += this.tiles;
+            // this.oneCycle = true;
+        }
+        else if (this.coord.x < this.coordOld.x) {
+            // direction = this.directions.left;
+            this.move64Attack++;
+            this.directionRadom = this.directions.left;
+            this.minotaurDirection = this.allMinotaurDirections.left;
+            this.randomX -= this.tiles;
+            // this.oneCycle = true;
+        }
+        else if (this.coord.y > this.coordOld.y) {
+            // direction = this.directions.down;
+            this.move64Attack++;
+            this.directionRadom = this.directions.down;
+            this.minotaurDirection = this.allMinotaurDirections.down;
+            this.randomY += this.tiles;
+            // this.oneCycle = true;
+        }
+        else if (this.coord.y < this.coordOld.y) {
+            // direction = this.directions.up;
+            this.move64Attack++;
+            this.directionRadom = this.directions.up;
+            this.minotaurDirection = this.allMinotaurDirections.up;
+            this.randomY -= this.tiles;
+            // this.oneCycle = true;
+        }
+
+        return true;
+
+    }
+
+
+
+
+    // pararwhile: boolean = false; // depois deletar somente teste
+    realCost:number = 0;
+    private pathFinding(endTile: any) {
+        // if (direction == this.directions.left) {
+
+
+        // let neighborsLeftRight = [{ x: 0, y: -1 }, { x: 0, y: 1 }];
+        // let neighborsUpDown = [{ x: -1, y: 0 }, { x: 1, y: 0 }];
+
+        // let path = [];
+        console.log(endTile);
+        let visited: node[] = [];
+        let start = { x: this.locationMinotaur.x, y: this.locationMinotaur.y };
+        let tile = { x: this.locationMinotaur.x, y: this.locationMinotaur.y };
+        let end = endTile;
+        // let end = { x: this.player.locationPlayer.x, y: this.player.locationPlayer.y }
+        // let finish = true;
+
+        let dxx = this.player.locationPlayer.x - this.locationMinotaur.x;
+        let dyy = this.player.locationPlayer.y - this.locationMinotaur.y;
+        let length = Math.hypot(dxx, dyy);
+
+
+        // if (length < this.radius && this.pararwhile == false) {
+        // this.pararwhile = true;
+
+        let allDirections = [{ x: 0, y: -1 }, { x: 0, y: 1 }, { x: -1, y: 0 }, { x: 1, y: 0 }];
+        let openList: node[] = [];
+        let tempNodes = [];
+
+        let cost = start.x + start.y;
+        let heur = Math.abs(start.x - end.x) + Math.abs(start.y - end.y);
+        let som = cost + heur;
+
+        let node: node = {
+            position: { x: start.x, y: start.y },
+            cost: cost,
+            heur: heur,
+            som: som,
+            prev: undefined
+        };
+
+
+        openList.push(node);
+        visited.push(node);
+        tempNodes.push(node);
+
+        let finded = false;
+        let count = 0;
+        while (count < 500) {
+            count++;
+            // while (!finded) {
+
+            let bestSom: node | undefined, bestHeur: node | undefined;
+            if (tempNodes.length > 0 || openList.length > 0) {
+                openList.sort((cur: any, prev: any) => cur.som - prev.som);
+                let bestSom = openList.shift();
+                // let bestSom = tempNodes.reduce((cur: any, prev: any) => { return cur.som < prev.som ? cur : prev });
+                let bestHeur = tempNodes.find((e: any) => { return (bestSom!.som == e.som) && (bestSom!.heur > e.heur) });
+
+                // let bestNode = bestHeur || bestSom!;
+                let bestNode = bestSom!;
+
+                tempNodes = [];
+                // let allTempNodes = [];
+                let i = 0;
+                while (i <= (allDirections.length - 1)) {
+                    this.realCost++;
+                    let x = bestNode.position.x;
+                    let y = bestNode.position.y;
+
+                    x += allDirections[i].x;
+                    y += allDirections[i].y;
+
+                    // cost = x + y;
+                    cost = this.realCost;
+                    heur = Math.abs(x - end.x) + Math.abs(y - end.y);
+                    som = cost + heur;
+
+                    const newNode: node = {
+                        position: { x: x, y: y },
+                        cost: cost,
+                        heur: heur,
+                        som: som,
+                        prev: bestNode
+                    }
+
+                    if (
+                        !this.collisionAttack(x, y) &&
+                        // !openList.some((e: any) => e.position.x == x && e.position.y == y) && 
+                        !visited.some((e: any) => e.position.x == x && e.position.y == y) &&
+                        x > 0 && y > 0) {
+
+                        // cost = x + y;
+                        // heur = Math.abs(x - end.x) + Math.abs(y - end.x);
+                        // som = cost + heur;
+
+                        // const newNode: node = {
+                        //     position: { x: x, y: y },
+                        //     cost: cost,
+                        //     heur: heur,
+                        //     som: som,
+                        //     prev: bestNode
+                        // }
+
+                        openList.push(newNode);
+                        tempNodes.push(newNode);
+                        if (x == end.x && y == end.y) {
+                            count = 550;
+                            // finded = true;
+
+                            this.realCost = 0;
+                            i = 50;
+                        }
+                    }
+                    // allTempNodes.push(newNode);
+                    // if(i == 3 && tempNodes.length == 0){  }
+                    visited.push(newNode);
+                    i++;
+                }
+            }
+        };
+
+        let last = openList[(openList.length - 1)];
+        let path = [];
+        path.push(last.position);
+        let finish = false;
+        while (!finish) {
+            if (last.prev) {
+                path.push(last.prev.position);
+                last = last.prev;
             } else {
-                return this.directions.down;
+                finish = true;
             }
         }
+
+        console.log(openList);
+        console.log(path);
+        path.reverse();
+        path.shift();
+        path.pop(); //depois descomentar
+        return path
+    }
+
+
+    private collisionAttack(mx: number, my: number) {
+
+        return this.trees.allTrees.some((e) => {
+            let maxy = (e.y + e.size.y) - 1;
+            let maxx = (e.x + e.size.x) - 1;
+            // if (this.directionRadom == this.directions.up) {
+            if (maxy == my && (mx >= e.x && mx <= maxx)) {
+                return true;
+            }
+            // }
+            // else if (this.directionRadom == this.directions.down) {
+            if (e.y == my && (mx >= e.x && mx <= maxx)) {
+                return true;
+            }
+            // }
+            // else if (this.directionRadom == this.directions.right) {
+            if (e.x == mx && (my >= e.y && my <= maxy)) {
+                return true;
+            }
+            // }
+            // else if (this.directionRadom == this.directions.left) {
+            if (maxx == mx && (my >= e.y && my <= maxy)) {
+                return true;
+            }
+            // }
+        });
     }
 
     private collision() {
-        let left = 0, right = 0, up = 0, down = 0;
-        if (this.directionRadom == this.directions.left) { left = 1 }
-        else if (this.directionRadom == this.directions.right) { right = 1; }
-        else if (this.directionRadom == this.directions.up) { up = 1 }
-        else if (this.directionRadom == this.directions.down) { down = 1 }
 
         let mx = this.locationMinotaur.x;
         let my = this.locationMinotaur.y;
         return this.trees.allTrees.some((e) => {
             let maxy = (e.y + e.size.y) - 1;
             let maxx = (e.x + e.size.x) - 1;
-            // console.log(e)
             if (this.directionRadom == this.directions.up) {
                 if (maxy == (my - 1) && (mx >= e.x && mx <= maxx)) {
-                    // console.log(e);
                     return true;
                 }
             }
@@ -488,45 +774,6 @@ export class Minotaur {
         });
     }
 
-    // private collision(direction: string, futurePosition: number, x: number, y: number, width: number, height: number, dpr: number): boolean {
-    //     let left = 0, right = 0, up = 0, down = 0;
-    //     if (direction == this.directions.left) { left = futurePosition; }
-    //     if (direction == this.directions.right) { right = futurePosition; }
-    //     if (direction == this.directions.up) { up = futurePosition; }
-    //     if (direction == this.directions.down) { down = futurePosition; }
-
-    //     let collisionTrees = this.trees.allTrees.some((e) => {
-
-    //         // if ((e.x - worldx) > 0 && (e.x - worldx) < width
-    //         //     && (e.y - worldy) > 0 && (e.y - worldy) < height) {
-
-    //         if (((e.x - this.worldX) + e.size.x) > ((x - this.worldX) - left) &&
-    //             (e.x - this.worldX) < (((x + this.size.x) - this.worldX) + right) &&
-    //             ((e.y - this.worldY) + e.size.y) > ((y - this.worldY) - up) &&
-    //             (e.y - this.worldY) < (((y + this.size.y) - this.worldY) + down)) {
-    //             return true;
-    //         }
-    //         // }
-    //     });
-
-    //     return collisionTrees;
-
-    //     // //o 32 e metade do player, dps ver ocmo trazer valor
-    //     // let colissionPlayer = (
-    //     //     ((width * dpr) / 2) - (this.player.size / 2)) < ((x - this.worldX) + this.size) &&
-    //     //     (((width * dpr) / 2) + (this.player.size / 2)) > (x - this.worldX) &&
-    //     //     (((height * dpr) / 2) - (this.player.size / 2)) < ((y - this.worldY) + this.size) &&
-    //     //     (((height * dpr) / 2) + (this.player.size / 2)) > (y - this.worldY);
-
-    //     // return collisionTrees || colissionPlayer;
-    // }
-
-    private collisionPlayer(width: number, height: number, x: number, y: number, dpr: number): boolean {
-        return (((width * dpr) / 2) - (this.player.size.x / 2)) < ((x - this.worldX) + this.size.x) &&
-            (((width * dpr) / 2) + (this.player.size.x / 2)) > (x - this.worldX) &&
-            (((height * dpr) / 2) - (this.player.size.x / 2)) < ((y - this.worldY) + this.size.y) &&
-            (((height * dpr) / 2) + (this.player.size.x / 2)) > (y - this.worldY);
-    }
 
     private getRandom(min: number, max: number, mult?: number): number {
         let result = Math.floor(Math.random() * max) + min;
@@ -544,17 +791,15 @@ export class Minotaur {
         return this.directions.down;
     }
 
-    private otherDirectionHunt(direction: string): string {
-
-        let xDirection = [this.directions.left, this.directions.right];
-        let yDirection = [this.directions.up, this.directions.down];
-        let numberDirection = this.getRandom(0, 50);
-        if (direction == this.directions.up) { return xDirection[numberDirection < 25 ? 0 : 1]; }
-        else if (direction == this.directions.down) { return xDirection[numberDirection < 25 ? 0 : 1]; }
-        else if (direction == this.directions.left) { return yDirection[numberDirection < 25 ? 0 : 1]; }
-        else { return yDirection[numberDirection < 25 ? 0 : 1]; }
-    }
 
 
 
+}
+
+interface node {
+    position: any,
+    cost: number,
+    heur: number,
+    som: number,
+    prev?: node
 }

@@ -7,6 +7,7 @@ import { Minotaur } from './objects/minotaur';
 import { Player } from './objects/player';
 import { MagicBlueField } from './objects/magicBlueField'
 import { Ground } from './objects/ground';
+import { EventEmitter } from './objects/eventEmitter';
 
 /*
 ver sobre chunks
@@ -31,6 +32,7 @@ export class index {
     //player
     name?: string;
     id?: string;
+    logged:boolean = false;
 
     //area
     dpr: number = window.devicePixelRatio || 1; //valor repsentante do pixel real
@@ -63,6 +65,7 @@ export class index {
 
     //classes
     // magicFieldBlue: Others = new Others();
+    eventEmitter:EventEmitter = new EventEmitter();
     magicFieldBlue: MagicBlueField = new MagicBlueField();
     minotaur: Minotaur = new Minotaur();
     player: Player = new Player();
@@ -70,6 +73,9 @@ export class index {
     ground: Ground = new Ground();
 
     constructor() {
+        this.player.setEmitter(this.eventEmitter);
+        this.minotaur.setEmitter(this.eventEmitter);
+
         this.addlisteners();
         this.addListenersControls("s");
         this.createCanvas();
@@ -160,7 +166,7 @@ export class index {
         this.ground.drawGround(this.ctx!, this.world.x, this.world.y, this.width, this.height);
         this.minotaur.drawMinotaur(this.ctx!, this.world, this.minotaurImage, this.width, this.height, this.dpr);
 
-        if (this.name) {
+        if (this.logged) {
             this.player.drawPlayer(this.ctx!, this.playerImage, this.width, this.height, this.dpr);
             if (this.magicFieldBlue.countShow < this.magicFieldBlue.frameDuration) {
                 this.magicFieldBlue.drawMagicFieldBlue(this.ctx!, this.magicBlueFieldImage, this.width, this.height, this.dpr, this.player.size.x);
@@ -239,6 +245,7 @@ export class index {
         if (this.player.getId()) {
             // this.world.x = 0;
             // this.world.y = 0;
+            this.logged = true;;
             let input = document.getElementById("name") as HTMLInputElement;
             this.name = input.value;
             this.socket.emit("playerJoin", this.name);

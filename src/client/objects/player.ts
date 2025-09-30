@@ -1,3 +1,4 @@
+import { EventEmitter } from "./eventEmitter";
 import { Trees } from "./trees";
 
 
@@ -7,10 +8,10 @@ export class Player {
     private id?: number;
     localImage: string = "../imgs/citizen/";
     size: any = { x: this.scale, y: this.scale };
-    locationPlayer: any = { x: 6, y: 5 };
-    speed:number = 2;
-    tiles:number = 1 * this.speed;
-    cicle:number = 64 / this.speed;
+    locationPlayer: any = { x: 9, y: 10 };
+    speed: number = 4;
+    tiles: number = 1 * this.speed;
+    cycle: number = 64 / this.speed;
     marginCollision: number = 0;
     frames: any = {
         move: [
@@ -63,7 +64,13 @@ export class Player {
     //class
     trees: Trees = new Trees();
 
+    eventEmitter!: EventEmitter;
+
     constructor() { }
+
+    setEmitter(eventEmitter: EventEmitter) {
+        this.eventEmitter = eventEmitter;
+    }
 
 
     drawPlayer(ctx: CanvasRenderingContext2D, img: HTMLImageElement, width: number, height: number, dpr: number) {
@@ -81,7 +88,7 @@ export class Player {
         // let py = 3 * this.scale;
 
         ctx.drawImage(playerImg,
-            this.direction.frames[this.countFrames % this.direction.frames.length].x, 
+            this.direction.frames[this.countFrames % this.direction.frames.length].x,
             this.direction.frames[this.countFrames % this.direction.frames.length].y,
             64, 64,
             x, y,
@@ -108,7 +115,7 @@ export class Player {
         if (this.key === null && Object.keys(keys).length > 0 && Object.values(keys).filter(Boolean).length === 1) { this.key = structuredClone(keys); }
         if ((new Date().getTime() - this.lastKeyPress) > this.delayKeyPress) {
 
-            if (this.move64 >= this.cicle) {
+            if (this.move64 >= this.cycle) {
                 // console.log(keys); console.log(this.key);
                 this.setLocationPlayer(this.key, this.activeSetLocationPlayer); this.key = null; this.move64 = 0; this.stop();
             }
@@ -125,8 +132,8 @@ export class Player {
                         }
                     }
                     if (check) {
-                        world.y -= this.tiles;
                         this.direction = this.directions.up;
+                        world.y -= this.tiles;
                         this.pressedLastKey = this.arrowKeys.up;
                         this.move64++;
                     }
@@ -142,8 +149,8 @@ export class Player {
                         }
                     }
                     if (check) {
-                        world.x -= this.tiles;
                         this.direction = this.directions.left;
+                        world.x -= this.tiles;
                         this.pressedLastKey = this.arrowKeys.left;
                         this.move64++;
 
@@ -160,8 +167,8 @@ export class Player {
                         }
                     }
                     if (check) {
-                        world.y += this.tiles;
                         this.direction = this.directions.down;
+                        world.y += this.tiles;
                         this.pressedLastKey = this.arrowKeys.down;
                         this.move64++;
                     }
@@ -177,8 +184,8 @@ export class Player {
                         }
                     }
                     if (check) {
-                        world.x += this.tiles;
                         this.direction = this.directions.right;
+                        world.x += this.tiles;
                         this.pressedLastKey = this.arrowKeys.right;
                         this.move64++;
 
@@ -285,6 +292,8 @@ export class Player {
             else if (key[this.arrowKeys.right]) this.locationPlayer.x++;
             else if (key[this.arrowKeys.left]) this.locationPlayer.x--;
         }
+        this.eventEmitter.emit("playerMoved", { x: this.locationPlayer.x, y: this.locationPlayer.y });
+        console.log(this.locationPlayer);
         this.activeSetLocationPlayer = true;
     }
 

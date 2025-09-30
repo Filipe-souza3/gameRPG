@@ -10,10 +10,19 @@ export class Trees {
         { x: 6, y: 1, size: { x: 2, y: 2 }, color: "orange", img: this.localImage + "tree.webp" },
         { x: 6, y: 7, size: { x: 2, y: 2 }, color: "orange", img: this.localImage + "tree.webp" },
         { x: 1, y: 1, size: { x: 2, y: 2 }, color: "orange", img: this.localImage + "tree.webp" },
+        
+        { x: 2, y: 3, size: { x: 2, y: 2 }, color: "orange", img: this.localImage + "tree.webp" },
+        { x: 2, y: 6, size: { x: 2, y: 2 }, color: "orange", img: this.localImage + "tree.webp" },
+        { x: 2, y: 9, size: { x: 2, y: 2 }, color: "orange", img: this.localImage + "tree.webp" },
+        { x: 2, y: 1, size: { x: 2, y: 2 }, color: "orange", img: this.localImage + "tree.webp" },
+
+
+
+
         { x: 5, y: 7, size: { x: 2, y: 2 }, color: "orange", img: this.localImage + "tree.webp" },
         { x: 4, y: 2, size: { x: 2, y: 2 }, color: "orange", img: this.localImage + "tree.webp" },
         { x: 8, y: 1, size: { x: 2, y: 2 }, color: "orange", img: this.localImage + "tree.webp" },
-        { x: 12, y: 4, size: { x: 1, y: 1 }, color: "gray", img: this.localImage + "tree3.png" },
+        { x: 12, y: 3, size: { x: 1, y: 1 }, color: "gray", img: this.localImage + "tree3.png" },
         { x: 0, y: 0, size: { x: 1, y: 1 }, color: "green", img: this.localImage + "tree4.png" },
         { x: 8, y: 7, size: { x: 1, y: 1 }, color: "blue", img: this.localImage + "tree2.png" },
         { x: 13, y: 6, size: { x: 2, y: 2 }, color: "black", img: this.localImage + "tree1.png" },
