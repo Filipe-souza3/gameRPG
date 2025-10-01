@@ -10,7 +10,6 @@ export class EventEmitter {
     }
 
     emit(event: string, data?: any) {
-        console.log(data);
         if (!this.listeners[event]) return;
         this.listeners[event].forEach((listener) => listener(data));
     }

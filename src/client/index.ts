@@ -251,6 +251,7 @@ export class index {
             this.socket.emit("playerJoin", this.name);
             this.log(`voce entrou como ${this.name}`);
             // this.createPlayer(this.id);
+            this.player.setName(this.name, true);
             this.player.drawPlayer(this.ctx!, this.playerImage, this.width, this.height, this.dpr);
             this.socket.emit("createPlayer", { id: this.id });
             this.addListenersControls(this.id);

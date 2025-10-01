@@ -4,11 +4,12 @@ import { Trees } from "./trees";
 
 export class Player {
 
-    scale: number = 64;
     private id?: number;
+    private name?:string;
+    scale: number = 64;
     localImage: string = "../imgs/citizen/";
     size: any = { x: this.scale, y: this.scale };
-    locationPlayer: any = { x: 9, y: 10 };
+    locationPlayer: any = { x: 4, y: 8 };
     speed: number = 4;
     tiles: number = 1 * this.speed;
     cycle: number = 64 / this.speed;
@@ -116,11 +117,10 @@ export class Player {
         if ((new Date().getTime() - this.lastKeyPress) > this.delayKeyPress) {
 
             if (this.move64 >= this.cycle) {
-                // console.log(keys); console.log(this.key);
                 this.setLocationPlayer(this.key, this.activeSetLocationPlayer); this.key = null; this.move64 = 0; this.stop();
             }
-            if (Object.keys(keys).length > 0) {
 
+            if (Object.keys(keys).length > 0) {
                 if (this.key && this.key[this.arrowKeys.up]) {
 
                     let check = true;
@@ -305,6 +305,15 @@ export class Player {
 
     getId() {
         return this.id;
+    }
+
+    setName(name:string, emit:boolean){
+        this.name = name;
+        if(emit) this.eventEmitter.emit("playerStatus", {name:name, status:"on"});
+    }
+
+    getName(){
+        return this.name;
     }
 
 
